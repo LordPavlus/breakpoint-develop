@@ -3,6 +3,8 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { AdminTabs } from "./AdminTabs"
 
+export const dynamic = "force-dynamic"
+
 export default async function AdminLayout({
   children,
 }: {

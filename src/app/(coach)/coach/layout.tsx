@@ -3,6 +3,8 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { CoachTabs } from "./CoachTabs"
 
+export const dynamic = "force-dynamic"
+
 export default async function CoachLayout({
   children,
 }: {
