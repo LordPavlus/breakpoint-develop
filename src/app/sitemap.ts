@@ -5,10 +5,15 @@ import { prisma } from "@/lib/prisma"
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"
 
-  const tournaments = await prisma.tournament.findMany({
-    where: { status: { notIn: ["DRAFT", "CANCELLED"] } },
-    select: { id: true, updatedAt: true },
-  })
+  let tournaments: { id: string; updatedAt: Date }[] = []
+  try {
+    tournaments = await prisma.tournament.findMany({
+      where: { status: { notIn: ["DRAFT", "CANCELLED"] } },
+      select: { id: true, updatedAt: true },
+    })
+  } catch {
+    // БД недоступна во время статической сборки — возвращаем только статические маршруты
+  }
 
   return [
     {
