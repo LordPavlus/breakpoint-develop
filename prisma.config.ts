@@ -11,10 +11,10 @@ export default defineConfig({
   migrations: {
     seed: "tsx prisma/seed.ts",
   },
-  datasource: {
-    // Прямое (unpooled) подключение — нужно Prisma Migrate/db push/studio для
-    // advisory locks и работы с shadow database. Рантайм-клиент (src/lib/prisma.ts)
-    // использует отдельный driver adapter с DATABASE_URL (pooled).
-    url: env("DIRECT_URL"),
-  },
+  // DIRECT_URL нужен только для prisma migrate/db push/studio (локально).
+  // На Vercel при prisma generate (в build-шаге) env-переменная уже есть,
+  // но при postinstall — ещё нет, поэтому делаем секцию условной.
+  ...(process.env.DIRECT_URL
+    ? { datasource: { url: env("DIRECT_URL") } }
+    : {}),
 });
