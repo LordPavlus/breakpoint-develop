@@ -1,4 +1,4 @@
-import { NtrpLevel } from "@prisma/client"
+import type { NtrpLevel } from "@prisma/client"
 
 export const ntrpLabels: Record<NtrpLevel, string> = {
   NTRP_1_0: "1.0",
@@ -14,7 +14,11 @@ export const ntrpLabels: Record<NtrpLevel, string> = {
   NTRP_6_0_PLUS: "6.0+",
 }
 
-const ntrpOrder = Object.values(NtrpLevel)
+const ntrpOrder: NtrpLevel[] = [
+  "NTRP_1_0", "NTRP_1_5", "NTRP_2_0", "NTRP_2_5",
+  "NTRP_3_0", "NTRP_3_5", "NTRP_4_0", "NTRP_4_5",
+  "NTRP_5_0", "NTRP_5_5", "NTRP_6_0_PLUS",
+]
 
 // Числовой ранг уровня для сортировки/балансировки по NTRP (выше = сильнее).
 // Неизвестный уровень (null) считается самым слабым.
