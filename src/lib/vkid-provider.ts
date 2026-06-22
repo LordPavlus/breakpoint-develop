@@ -25,7 +25,7 @@ export function VKIDProvider({
     type: "oauth",
     authorization: {
       url: "https://id.vk.com/oauth2/auth",
-      params: { scope: "email", response_type: "code" },
+      params: { scope: "vkid.personal_info email", response_type: "code" },
     },
     token: "https://id.vk.com/oauth2/token",
     userinfo: {
