@@ -21,6 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.VK_CLIENT_ID!,
       clientSecret: process.env.VK_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
+      checks: ["state"],
     }),
     Credentials({
       id: "email-otp",
