@@ -3,18 +3,21 @@ import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { TelegramLoginSection } from "@/components/auth/TelegramLoginSection"
+import { signIn } from "@/lib/auth"
 import { LoginForm } from "./LoginForm"
 
-export default function LoginPage() {
-  const telegramBotUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
+async function signInWithYandex() {
+  "use server"
+  await signIn("yandex", { redirectTo: "/" })
+}
 
+export default function LoginPage() {
   return (
     <div className="mx-auto flex max-w-sm flex-col px-4 py-16 sm:py-24">
       <Card>
@@ -34,21 +37,18 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            {telegramBotUsername && (
-              <div className="flex justify-center">
-                <TelegramLoginSection botUsername={telegramBotUsername} />
-              </div>
-            )}
-            <Button disabled variant="outline" className="w-full">
-              Войти через Яндекс ID
-            </Button>
+            <form action={signInWithYandex}>
+              <Button type="submit" variant="outline" className="w-full">
+                Войти через Яндекс ID
+              </Button>
+            </form>
             <Button disabled variant="outline" className="w-full">
               Войти через VK ID
             </Button>
           </div>
         </CardContent>
         <CardFooter className="justify-center">
-          <Badge variant="secondary">Соцсети — скоро</Badge>
+          <Badge variant="secondary">VK ID — скоро</Badge>
         </CardFooter>
       </Card>
     </div>
