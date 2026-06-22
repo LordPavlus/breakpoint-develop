@@ -24,7 +24,17 @@ export async function updateProfile(
 
   const name = String(formData.get("name") ?? "").trim()
   const bio = String(formData.get("bio") ?? "").trim()
+  const phone = String(formData.get("phone") ?? "").trim()
   const ntrpRaw = String(formData.get("ntrpLevel") ?? "")
+  const weekdayAvailability = String(formData.get("weekdayAvailability") ?? "").trim()
+  const weekendAvailability = String(formData.get("weekendAvailability") ?? "").trim()
+  const preferredDays = formData.getAll("preferredDays").map(String)
+  const districtCheckboxes = formData.getAll("preferredDistricts").map(String)
+  const customDistrict = String(formData.get("customDistrict") ?? "").trim()
+  const preferredDistricts = [
+    ...districtCheckboxes,
+    ...(customDistrict ? [customDistrict] : []),
+  ]
 
   if (!name) {
     return { error: "Укажите имя" }
@@ -33,11 +43,26 @@ export async function updateProfile(
   const ntrpLevel = ntrpValues.has(ntrpRaw) ? (ntrpRaw as NtrpLevel) : null
 
   await prisma.$transaction([
-    prisma.user.update({ where: { id: userId }, data: { name } }),
+    prisma.user.update({ where: { id: userId }, data: { name, phone: phone || null } }),
     prisma.playerProfile.upsert({
       where: { userId },
-      update: { bio: bio || null, ntrpLevel },
-      create: { userId, bio: bio || null, ntrpLevel },
+      update: {
+        bio: bio || null,
+        ntrpLevel,
+        weekdayAvailability: weekdayAvailability || null,
+        weekendAvailability: weekendAvailability || null,
+        preferredDays,
+        preferredDistricts,
+      },
+      create: {
+        userId,
+        bio: bio || null,
+        ntrpLevel,
+        weekdayAvailability: weekdayAvailability || null,
+        weekendAvailability: weekendAvailability || null,
+        preferredDays,
+        preferredDistricts,
+      },
     }),
   ])
 

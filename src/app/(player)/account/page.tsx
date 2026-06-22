@@ -38,8 +38,13 @@ export default async function AccountPage() {
       <ProfileForm
         email={user.email ?? ""}
         name={user.name ?? ""}
+        phone={user.phone ?? ""}
         bio={user.playerProfile?.bio ?? ""}
         ntrpLevel={user.playerProfile?.ntrpLevel ?? null}
+        weekdayAvailability={user.playerProfile?.weekdayAvailability ?? ""}
+        weekendAvailability={user.playerProfile?.weekendAvailability ?? ""}
+        preferredDays={user.playerProfile?.preferredDays ?? []}
+        preferredDistricts={user.playerProfile?.preferredDistricts ?? []}
       />
       <TelegramSection telegramUsername={user.telegramUsername} />
       <PushNotificationToggle />
