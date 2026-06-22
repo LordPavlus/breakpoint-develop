@@ -1,8 +1,8 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import Yandex from "next-auth/providers/yandex"
-import VK from "next-auth/providers/vk"
 import { PrismaAdapter } from "@auth/prisma-adapter"
+import { VKIDProvider } from "@/lib/vkid-provider"
 import type { UserRole } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
 import { hashOtpCode } from "@/lib/otp"
@@ -17,11 +17,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.YANDEX_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
-    VK({
+    VKIDProvider({
       clientId: process.env.VK_CLIENT_ID!,
       clientSecret: process.env.VK_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-      checks: ["state"], // классический oauth.vk.com не поддерживает PKCE
     }),
     Credentials({
       id: "email-otp",
