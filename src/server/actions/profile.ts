@@ -1,6 +1,7 @@
 "use server"
 
 import { NtrpLevel } from "@prisma/client"
+import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
@@ -66,6 +67,7 @@ export async function updateProfile(
     }),
   ])
 
+  revalidatePath("/account")
   return { success: true }
 }
 

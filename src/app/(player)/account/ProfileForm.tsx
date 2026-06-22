@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useState } from "react"
+import { useState, useTransition } from "react"
 import type { NtrpLevel } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
@@ -17,16 +17,9 @@ import {
 import { updateProfile, type UpdateProfileState } from "@/server/actions/profile"
 import { ntrpLabels } from "@/lib/ntrp"
 
-const initialState: UpdateProfileState = {}
-
 const DAYS = [
-  { value: "Понедельник", label: "Понедельник" },
-  { value: "Вторник", label: "Вторник" },
-  { value: "Среда", label: "Среда" },
-  { value: "Четверг", label: "Четверг" },
-  { value: "Пятница", label: "Пятница" },
-  { value: "Суббота", label: "Суббота" },
-  { value: "Воскресенье", label: "Воскресенье" },
+  "Понедельник", "Вторник", "Среда", "Четверг",
+  "Пятница", "Суббота", "Воскресенье",
 ]
 
 const DISTRICTS = [
@@ -36,14 +29,14 @@ const DISTRICTS = [
 
 export function ProfileForm({
   email,
-  name,
-  phone,
-  bio,
-  ntrpLevel,
-  weekdayAvailability,
-  weekendAvailability,
-  preferredDays,
-  preferredDistricts,
+  name: initialName,
+  phone: initialPhone,
+  bio: initialBio,
+  ntrpLevel: initialNtrp,
+  weekdayAvailability: initialWeekday,
+  weekendAvailability: initialWeekend,
+  preferredDays: initialDays,
+  preferredDistricts: initialDistricts,
 }: {
   email: string
   name: string
@@ -55,14 +48,58 @@ export function ProfileForm({
   preferredDays: string[]
   preferredDistricts: string[]
 }) {
-  const [state, formAction, pending] = useActionState(updateProfile, initialState)
+  const savedCustom = initialDistricts.find((d) => !DISTRICTS.includes(d)) ?? ""
 
-  const savedCustom = preferredDistricts.find((d) => !DISTRICTS.includes(d)) ?? ""
-  const [showCustomDistrict, setShowCustomDistrict] = useState(Boolean(savedCustom))
+  const [name, setName] = useState(initialName)
+  const [phone, setPhone] = useState(initialPhone)
+  const [bio, setBio] = useState(initialBio)
+  const [ntrpLevel, setNtrpLevel] = useState<string>(initialNtrp ?? "")
+  const [weekday, setWeekday] = useState(initialWeekday)
+  const [weekend, setWeekend] = useState(initialWeekend)
+  const [days, setDays] = useState<string[]>(initialDays)
+  const [districts, setDistricts] = useState<string[]>(
+    initialDistricts.filter((d) => DISTRICTS.includes(d))
+  )
+  const [showCustom, setShowCustom] = useState(Boolean(savedCustom))
+  const [customDistrict, setCustomDistrict] = useState(savedCustom)
+  const [result, setResult] = useState<UpdateProfileState>({})
+  const [isPending, startTransition] = useTransition()
+
+  function toggleDay(day: string) {
+    setDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    )
+  }
+
+  function toggleDistrict(d: string) {
+    setDistricts((prev) =>
+      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
+    )
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const fd = new FormData()
+    fd.set("name", name)
+    fd.set("phone", phone)
+    fd.set("bio", bio)
+    fd.set("ntrpLevel", ntrpLevel)
+    fd.set("weekdayAvailability", weekday)
+    fd.set("weekendAvailability", weekend)
+    days.forEach((d) => fd.append("preferredDays", d))
+    districts.forEach((d) => fd.append("preferredDistricts", d))
+    if (showCustom && customDistrict.trim()) {
+      fd.set("customDistrict", customDistrict.trim())
+    }
+
+    startTransition(async () => {
+      const res = await updateProfile({}, fd)
+      setResult(res)
+    })
+  }
 
   return (
-    <form action={formAction} className="max-w-md space-y-5">
-      {/* Базовые данные */}
+    <form onSubmit={handleSubmit} className="max-w-md space-y-5">
       <div className="space-y-1.5">
         <Label htmlFor="email">Email</Label>
         <Input id="email" value={email} disabled />
@@ -70,23 +107,28 @@ export function ProfileForm({
 
       <div className="space-y-1.5">
         <Label htmlFor="name">Имя</Label>
-        <Input id="name" name="name" defaultValue={name} required />
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="phone">Телефон</Label>
         <Input
           id="phone"
-          name="phone"
           type="tel"
-          defaultValue={phone}
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
           placeholder="+7 (999) 123-45-67"
         />
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="ntrpLevel">Уровень NTRP</Label>
-        <Select name="ntrpLevel" defaultValue={ntrpLevel ?? undefined}>
+        <Select value={ntrpLevel} onValueChange={(v) => setNtrpLevel(v ?? "")}>
           <SelectTrigger id="ntrpLevel" className="w-full">
             <SelectValue placeholder="Не указан" />
           </SelectTrigger>
@@ -104,73 +146,62 @@ export function ProfileForm({
         <Label htmlFor="bio">О себе</Label>
         <Textarea
           id="bio"
-          name="bio"
-          defaultValue={bio}
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
           rows={3}
           placeholder="Немного о вашем теннисном опыте"
         />
       </div>
 
-      {/* Доступность для турниров */}
       <div className="space-y-4 rounded-xl border border-border p-4">
         <p className="text-sm font-medium text-foreground">Для участия в турнирах</p>
 
         <div className="space-y-1.5">
-          <Label htmlFor="weekdayAvailability">Доступность в будни</Label>
+          <Label htmlFor="weekday">Доступность в будни</Label>
           <Input
-            id="weekdayAvailability"
-            name="weekdayAvailability"
-            defaultValue={weekdayAvailability}
+            id="weekday"
+            value={weekday}
+            onChange={(e) => setWeekday(e.target.value)}
             placeholder="Пример: с 9:00 до 13:00"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="weekendAvailability">Доступность в выходные</Label>
+          <Label htmlFor="weekend">Доступность в выходные</Label>
           <Input
-            id="weekendAvailability"
-            name="weekendAvailability"
-            defaultValue={weekendAvailability}
+            id="weekend"
+            value={weekend}
+            onChange={(e) => setWeekend(e.target.value)}
             placeholder="Пример: с 9:00 до 13:00"
           />
         </div>
 
-        {/* Дни недели */}
         <div className="space-y-2">
           <Label>Удобные дни для игры</Label>
           <div className="flex flex-wrap gap-2">
             {DAYS.map((day) => (
-              <label
-                key={day.value}
-                className="flex cursor-pointer items-center gap-1.5"
-              >
+              <label key={day} className="flex cursor-pointer items-center gap-1.5">
                 <input
                   type="checkbox"
-                  name="preferredDays"
-                  value={day.value}
-                  defaultChecked={preferredDays.includes(day.value)}
+                  checked={days.includes(day)}
+                  onChange={() => toggleDay(day)}
                   className="accent-primary"
                 />
-                <span className="text-sm">{day.label}</span>
+                <span className="text-sm">{day}</span>
               </label>
             ))}
           </div>
         </div>
 
-        {/* Районы Москвы */}
         <div className="space-y-2">
           <Label>Удобные районы Москвы</Label>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             {DISTRICTS.map((district) => (
-              <label
-                key={district}
-                className="flex cursor-pointer items-center gap-1.5"
-              >
+              <label key={district} className="flex cursor-pointer items-center gap-1.5">
                 <input
                   type="checkbox"
-                  name="preferredDistricts"
-                  value={district}
-                  defaultChecked={preferredDistricts.includes(district)}
+                  checked={districts.includes(district)}
+                  onChange={() => toggleDistrict(district)}
                   className="accent-primary"
                 />
                 <span className="text-sm">{district}</span>
@@ -179,18 +210,17 @@ export function ProfileForm({
             <label className="flex cursor-pointer items-center gap-1.5">
               <input
                 type="checkbox"
+                checked={showCustom}
+                onChange={(e) => setShowCustom(e.target.checked)}
                 className="accent-primary"
-                checked={showCustomDistrict}
-                onChange={(e) => setShowCustomDistrict(e.target.checked)}
               />
               <span className="text-sm">Свой вариант</span>
             </label>
           </div>
-
-          {showCustomDistrict && (
+          {showCustom && (
             <Input
-              name="customDistrict"
-              defaultValue={savedCustom}
+              value={customDistrict}
+              onChange={(e) => setCustomDistrict(e.target.value)}
               placeholder="Укажите район"
               className="mt-2 max-w-xs"
             />
@@ -198,11 +228,11 @@ export function ProfileForm({
         </div>
       </div>
 
-      {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
-      {state?.success && <p className="text-sm text-primary">Профиль сохранён.</p>}
+      {result?.error && <p className="text-sm text-destructive">{result.error}</p>}
+      {result?.success && <p className="text-sm text-primary">Профиль сохранён.</p>}
 
-      <Button type="submit" disabled={pending}>
-        {pending ? "Сохраняем…" : "Сохранить"}
+      <Button type="submit" disabled={isPending}>
+        {isPending ? "Сохраняем…" : "Сохранить"}
       </Button>
     </form>
   )
