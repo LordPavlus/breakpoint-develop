@@ -10,7 +10,7 @@ import { hashOtpCode } from "@/lib/otp"
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
+  pages: { signIn: "/login", error: "/login" },
   providers: [
     Yandex({
       clientId: process.env.YANDEX_CLIENT_ID!,
