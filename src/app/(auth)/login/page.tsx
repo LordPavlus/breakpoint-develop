@@ -6,11 +6,13 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { YandexLoginButton } from "@/components/auth/OAuthButtons"
+import { YandexLoginButton, VKLoginButton } from "@/components/auth/OAuthButtons"
 import { VKIDButton } from "@/components/auth/VKIDButton"
 import { LoginForm } from "./LoginForm"
 
 export default function LoginPage() {
+  const hasVKID = Boolean(process.env.NEXT_PUBLIC_VK_CLIENT_ID)
+
   return (
     <div className="mx-auto flex max-w-sm flex-col px-4 py-16 sm:py-24">
       <Card>
@@ -31,7 +33,10 @@ export default function LoginPage() {
 
           <div className="space-y-3">
             <YandexLoginButton />
-            <VKIDButton />
+            {/* SDK-виджет OneTap (показывается поверх кнопки когда загружается) */}
+            {hasVKID && <VKIDButton />}
+            {/* Запасная кнопка — всегда видна */}
+            <VKLoginButton />
           </div>
         </CardContent>
       </Card>
