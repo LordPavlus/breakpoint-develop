@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import Yandex from "next-auth/providers/yandex"
+import VK from "next-auth/providers/vk"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import type { UserRole } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
@@ -14,6 +15,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Yandex({
       clientId: process.env.YANDEX_CLIENT_ID!,
       clientSecret: process.env.YANDEX_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
+    VK({
+      clientId: process.env.VK_CLIENT_ID!,
+      clientSecret: process.env.VK_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
