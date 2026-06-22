@@ -41,11 +41,7 @@ export default async function AccountPage() {
         bio={user.playerProfile?.bio ?? ""}
         ntrpLevel={user.playerProfile?.ntrpLevel ?? null}
       />
-      <TelegramSection
-        botUsername={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}
-        hasTelegram={!!user.telegramId}
-        telegramUsername={user.telegramUsername}
-      />
+      <TelegramSection telegramUsername={user.telegramUsername} />
       <PushNotificationToggle />
       <ReferralSection
         referralCode={referralCode}

@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useActionState } from "react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -11,74 +10,44 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { TelegramLoginButton } from "@/components/auth/TelegramLoginButton"
-import { linkTelegramAccount, unlinkTelegramAccount } from "@/server/actions/profile"
-import type { TelegramWidgetUser } from "@/lib/telegram"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { saveTelegramUsername, type UpdateProfileState } from "@/server/actions/profile"
 
-export function TelegramSection({
-  botUsername,
-  hasTelegram,
-  telegramUsername,
-}: {
-  botUsername?: string
-  hasTelegram: boolean
-  telegramUsername: string | null
-}) {
-  const [linked, setLinked] = useState(hasTelegram)
-  const [username, setUsername] = useState(telegramUsername)
-  const [error, setError] = useState<string | null>(null)
-  const [pending, startTransition] = useTransition()
+const initialState: UpdateProfileState = {}
 
-  const handleAuth = (data: TelegramWidgetUser) => {
-    setError(null)
-    startTransition(async () => {
-      const result = await linkTelegramAccount(data)
-      if (result.error) {
-        setError(result.error)
-        return
-      }
-      setLinked(true)
-      setUsername(data.username ?? null)
-    })
-  }
-
-  const handleUnlink = () => {
-    setError(null)
-    startTransition(async () => {
-      const result = await unlinkTelegramAccount()
-      if (result.error) {
-        setError(result.error)
-        return
-      }
-      setLinked(false)
-      setUsername(null)
-    })
-  }
+export function TelegramSection({ telegramUsername }: { telegramUsername: string | null }) {
+  const [state, formAction, pending] = useActionState(saveTelegramUsername, initialState)
 
   return (
     <Card className="mt-6">
       <CardHeader>
         <CardTitle className="text-lg">Telegram</CardTitle>
         <CardDescription>
-          Привяжите Telegram, чтобы получать уведомления о бронированиях и турнирах.
+          Укажите ваш Telegram для связи с другими игроками при согласовании матчей.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {linked ? (
-          <div className="flex items-center justify-between gap-4">
-            <Badge variant="secondary">
-              {username ? `Подключено: @${username}` : "Telegram подключён"}
-            </Badge>
-            <Button variant="outline" size="sm" disabled={pending} onClick={handleUnlink}>
-              Отключить
-            </Button>
+      <CardContent>
+        <form action={formAction} className="flex items-end gap-3">
+          <div className="flex-1 space-y-1.5">
+            <Label htmlFor="telegramUsername">Имя пользователя</Label>
+            <Input
+              id="telegramUsername"
+              name="telegramUsername"
+              placeholder="@username"
+              defaultValue={telegramUsername ? `@${telegramUsername}` : ""}
+            />
           </div>
-        ) : botUsername ? (
-          <TelegramLoginButton botUsername={botUsername} onAuth={handleAuth} />
-        ) : (
-          <p className="text-sm text-muted-foreground">Привязка Telegram временно недоступна.</p>
+          <Button type="submit" disabled={pending} variant="outline">
+            {pending ? "Сохраняем…" : "Сохранить"}
+          </Button>
+        </form>
+        {state?.success && (
+          <p className="mt-2 text-sm text-muted-foreground">Сохранено</p>
         )}
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {state?.error && (
+          <p className="mt-2 text-sm text-destructive">{state.error}</p>
+        )}
       </CardContent>
     </Card>
   )

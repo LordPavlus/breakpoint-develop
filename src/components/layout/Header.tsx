@@ -89,13 +89,15 @@ export function Header({
         <div className="flex items-center gap-2">
           {user ? (
             <div className="hidden items-center gap-2 sm:flex">
-              <Avatar size="sm">
-                {image && <AvatarImage src={image} alt={user.name ?? "Профиль"} />}
-                <AvatarFallback>{initials(user.name ?? user.email ?? "?")}</AvatarFallback>
-              </Avatar>
-              <span className="max-w-40 truncate text-sm text-muted-foreground">
-                {user.name ?? user.email}
-              </span>
+              <Link href={cabinetHref} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <Avatar size="sm">
+                  {image && <AvatarImage src={image} alt={user.name ?? "Профиль"} />}
+                  <AvatarFallback>{initials(user.name ?? user.email ?? "?")}</AvatarFallback>
+                </Avatar>
+                <span className="max-w-40 truncate text-sm text-muted-foreground">
+                  {user.name ?? user.email}
+                </span>
+              </Link>
               <form action={signOutAction}>
                 <Button type="submit" variant="outline" size="sm">
                   Выйти
@@ -159,7 +161,11 @@ export function Header({
               <div className="mt-auto space-y-2 p-4">
                 {user ? (
                   <>
-                    <div className="flex items-center gap-2 px-1">
+                    <SheetClose
+                      render={<Link href={cabinetHref} />}
+                      nativeButton={false}
+                      className="flex items-center gap-2 px-1 hover:opacity-80 transition-opacity"
+                    >
                       <Avatar size="sm">
                         {image && <AvatarImage src={image} alt={user.name ?? "Профиль"} />}
                         <AvatarFallback>{initials(user.name ?? user.email ?? "?")}</AvatarFallback>
@@ -167,7 +173,7 @@ export function Header({
                       <p className="truncate text-sm text-muted-foreground">
                         {user.name ?? user.email}
                       </p>
-                    </div>
+                    </SheetClose>
                     <form action={signOutAction}>
                       <Button type="submit" variant="outline" className="w-full">
                         Выйти

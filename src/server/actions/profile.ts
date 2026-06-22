@@ -3,7 +3,6 @@
 import { NtrpLevel } from "@prisma/client"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { verifyTelegramAuth, widgetUserToAuthData, type TelegramWidgetUser } from "@/lib/telegram"
 
 export type UpdateProfileState = {
   error?: string
@@ -45,64 +44,20 @@ export async function updateProfile(
   return { success: true }
 }
 
-export type TelegramLinkState = {
-  error?: string
-  success?: boolean
-}
-
-export async function linkTelegramAccount(
-  data: TelegramWidgetUser
-): Promise<TelegramLinkState> {
+export async function saveTelegramUsername(
+  _prevState: UpdateProfileState,
+  formData: FormData
+): Promise<UpdateProfileState> {
   const session = await auth()
   const userId = session?.user?.id
+  if (!userId) return { error: "Не авторизован" }
 
-  if (!userId) {
-    return { error: "Не авторизован" }
-  }
-
-  const authData = widgetUserToAuthData(data)
-
-  if (!verifyTelegramAuth(authData)) {
-    return { error: "Не удалось проверить данные Telegram" }
-  }
-
-  const existing = await prisma.user.findUnique({
-    where: { telegramId: authData.id },
-    select: { id: true },
-  })
-
-  if (existing && existing.id !== userId) {
-    return { error: "Этот Telegram-аккаунт уже привязан к другому пользователю" }
-  }
+  const raw = String(formData.get("telegramUsername") ?? "").trim()
+  const username = raw.startsWith("@") ? raw.slice(1) : raw
 
   await prisma.user.update({
     where: { id: userId },
-    data: { telegramId: authData.id, telegramUsername: authData.username ?? null },
-  })
-
-  return { success: true }
-}
-
-export async function unlinkTelegramAccount(): Promise<TelegramLinkState> {
-  const session = await auth()
-  const userId = session?.user?.id
-
-  if (!userId) {
-    return { error: "Не авторизован" }
-  }
-
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
-    select: { email: true },
-  })
-
-  if (!user.email) {
-    return { error: "Нельзя отключить Telegram — у аккаунта нет email для входа" }
-  }
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { telegramId: null, telegramUsername: null },
+    data: { telegramUsername: username || null },
   })
 
   return { success: true }
