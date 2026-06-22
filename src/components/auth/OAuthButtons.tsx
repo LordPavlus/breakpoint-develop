@@ -22,7 +22,7 @@ export function VKLoginButton() {
       className="w-full"
       onClick={() => signIn("vk", { callbackUrl: "/" })}
     >
-      Войти через VK ID
+      Войти через VK ID (OAuth)
     </Button>
   )
 }

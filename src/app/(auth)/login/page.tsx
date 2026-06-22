@@ -6,7 +6,8 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { YandexLoginButton, VKLoginButton } from "@/components/auth/OAuthButtons"
+import { YandexLoginButton } from "@/components/auth/OAuthButtons"
+import { VKIDButton } from "@/components/auth/VKIDButton"
 import { LoginForm } from "./LoginForm"
 
 export default function LoginPage() {
@@ -28,9 +29,9 @@ export default function LoginPage() {
             <Separator className="flex-1" />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <YandexLoginButton />
-            <VKLoginButton />
+            <VKIDButton />
           </div>
         </CardContent>
       </Card>
