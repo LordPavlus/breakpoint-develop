@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { AuthError } from "next-auth"
 import { signIn, signOut } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { widgetUserToAuthData, type TelegramWidgetUser } from "@/lib/telegram"
 import {
   generateOtpCode,
   hashOtpCode,
@@ -78,6 +79,37 @@ export async function verifyOtp(
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Неверный или истёкший код" }
+    }
+    throw error
+  }
+
+  redirect("/")
+}
+
+export type SignInWithTelegramState = {
+  error?: string
+}
+
+export async function signInWithTelegram(
+  data: TelegramWidgetUser
+): Promise<SignInWithTelegramState> {
+  const authData = widgetUserToAuthData(data)
+
+  const credentials: Record<string, string> = {
+    id: authData.id,
+    first_name: authData.first_name,
+    auth_date: authData.auth_date,
+    hash: authData.hash,
+  }
+  if (authData.last_name) credentials.last_name = authData.last_name
+  if (authData.username) credentials.username = authData.username
+  if (authData.photo_url) credentials.photo_url = authData.photo_url
+
+  try {
+    await signIn("telegram", { ...credentials, redirect: false })
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { error: "Не удалось войти через Telegram" }
     }
     throw error
   }

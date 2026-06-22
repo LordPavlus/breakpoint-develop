@@ -8,6 +8,7 @@ import { AvatarUpload } from "@/components/profile/AvatarUpload"
 import { r2Configured } from "@/lib/storage/s3"
 import { ProfileForm } from "./ProfileForm"
 import { ReferralSection } from "./ReferralSection"
+import { TelegramSection } from "./TelegramSection"
 
 export default async function AccountPage() {
   const session = await auth()
@@ -39,6 +40,11 @@ export default async function AccountPage() {
         name={user.name ?? ""}
         bio={user.playerProfile?.bio ?? ""}
         ntrpLevel={user.playerProfile?.ntrpLevel ?? null}
+      />
+      <TelegramSection
+        botUsername={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}
+        hasTelegram={!!user.telegramId}
+        telegramUsername={user.telegramUsername}
       />
       <PushNotificationToggle />
       <ReferralSection

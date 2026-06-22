@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { signIn } from "@/lib/auth"
+import { TelegramLoginSection } from "@/components/auth/TelegramLoginSection"
 import { LoginForm } from "./LoginForm"
 
 async function signInWithYandex() {
@@ -18,6 +19,8 @@ async function signInWithYandex() {
 }
 
 export default function LoginPage() {
+  const telegramBotUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
+
   return (
     <div className="mx-auto flex max-w-sm flex-col px-4 py-16 sm:py-24">
       <Card>
@@ -37,6 +40,11 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
+            {telegramBotUsername && (
+              <div className="flex justify-center">
+                <TelegramLoginSection botUsername={telegramBotUsername} />
+              </div>
+            )}
             <form action={signInWithYandex}>
               <Button type="submit" variant="outline" className="w-full">
                 Войти через Яндекс ID
