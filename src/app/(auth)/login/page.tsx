@@ -1,5 +1,3 @@
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -8,18 +6,8 @@ import {
   CardDescription,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { signIn } from "@/lib/auth"
+import { YandexLoginButton, VKLoginButton } from "@/components/auth/OAuthButtons"
 import { LoginForm } from "./LoginForm"
-
-async function signInWithYandex() {
-  "use server"
-  await signIn("yandex", { redirectTo: "/" })
-}
-
-async function signInWithVK() {
-  "use server"
-  await signIn("vk", { redirectTo: "/" })
-}
 
 export default function LoginPage() {
   return (
@@ -41,16 +29,8 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <form action={signInWithYandex}>
-              <Button type="submit" variant="outline" className="w-full">
-                Войти через Яндекс ID
-              </Button>
-            </form>
-            <form action={signInWithVK}>
-              <Button type="submit" variant="outline" className="w-full">
-                Войти через VK ID
-              </Button>
-            </form>
+            <YandexLoginButton />
+            <VKLoginButton />
           </div>
         </CardContent>
       </Card>
