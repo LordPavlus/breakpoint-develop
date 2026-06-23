@@ -62,10 +62,16 @@ export function ntrpRangeLabel(
   if (min && max) return `NTRP ${ntrpLabels[min]}–${ntrpLabels[max]}`
   if (min) return `NTRP ${ntrpLabels[min]}+`
   if (max) return `NTRP до ${ntrpLabels[max]}`
-  return null
+  return "NTRP любое"
 }
 
-export function TournamentCard({ tournament }: { tournament: Tournament }) {
+export function TournamentCard({
+  tournament,
+  registrationsCount = 0,
+}: {
+  tournament: Tournament
+  registrationsCount?: number
+}) {
   const ntrpRange = ntrpRangeLabel(tournament.minNtrpLevel, tournament.maxNtrpLevel)
 
   return (
@@ -75,7 +81,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           <Trophy className="size-5" />
         </div>
         <CardTitle className="text-lg">{tournament.title}</CardTitle>
-        <CardDescription>{ntrpRange ?? "NTRP: любое"}</CardDescription>
+        <CardDescription>{ntrpRange}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
@@ -91,6 +97,11 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
         <div className="flex items-center gap-2">
           <Users className="size-4" />
           {formatLabels[tournament.format]}
+        </div>
+        <div className="flex items-center gap-2">
+          <Users className="size-4" />
+          Участников: {registrationsCount}
+          {tournament.maxParticipants ? ` / ${tournament.maxParticipants}` : ""}
         </div>
       </CardContent>
       <CardFooter className="flex items-center justify-between">
