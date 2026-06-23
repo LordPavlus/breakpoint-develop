@@ -36,6 +36,7 @@ export default async function TournamentDetailPage({
     userId
       ? prisma.tournamentRegistration.findUnique({
           where: { tournamentId_playerId: { tournamentId: id, playerId: userId } },
+          include: { payment: { select: { confirmationUrl: true } } },
         })
       : Promise.resolve(null),
     prisma.tournamentGroup.findMany({
@@ -79,6 +80,8 @@ export default async function TournamentDetailPage({
         registrationsCount={registrationsCount}
         isAuthenticated={Boolean(userId)}
         isRegistered={Boolean(myRegistration)}
+        isPendingPayment={myRegistration?.status === "PENDING_PAYMENT"}
+        paymentUrl={myRegistration?.payment?.confirmationUrl ?? null}
       />
 
       {groups.length > 0 && (

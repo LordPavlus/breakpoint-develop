@@ -30,6 +30,8 @@ export function RegisterButton({
   isAuthenticated,
   isRegistered,
   registrationOpen,
+  isPendingPayment,
+  paymentUrl,
 }: {
   tournamentId: string
   title: string
@@ -37,12 +39,28 @@ export function RegisterButton({
   isAuthenticated: boolean
   isRegistered: boolean
   registrationOpen: boolean
+  isPendingPayment?: boolean
+  paymentUrl?: string | null
 }) {
   const [state, formAction, pending] = useActionState(
     registerForTournament,
     initialState
   )
 
+  // Зарегистрирован, но не оплатил — показываем «Продолжить оплату»
+  if (isRegistered && isPendingPayment && paymentUrl) {
+    return (
+      <Button
+        render={<Link href={paymentUrl} />}
+        nativeButton={false}
+        className="w-full sm:w-auto"
+      >
+        Продолжить оплату
+      </Button>
+    )
+  }
+
+  // Зарегистрирован и оплатил
   if (isRegistered) {
     return (
       <Button disabled className="w-full sm:w-auto">

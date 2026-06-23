@@ -23,11 +23,15 @@ export function TournamentInfo({
   registrationsCount,
   isAuthenticated,
   isRegistered,
+  isPendingPayment,
+  paymentUrl,
 }: {
   tournament: Tournament
   registrationsCount: number
   isAuthenticated: boolean
   isRegistered: boolean
+  isPendingPayment?: boolean
+  paymentUrl?: string | null
 }) {
   const ntrpRange = ntrpRangeLabel(tournament.minNtrpLevel, tournament.maxNtrpLevel)
   const registrationOpen =
@@ -98,6 +102,8 @@ export function TournamentInfo({
         isAuthenticated={isAuthenticated}
         isRegistered={isRegistered}
         registrationOpen={registrationOpen}
+        isPendingPayment={isPendingPayment}
+        paymentUrl={paymentUrl}
       />
     </div>
   )
