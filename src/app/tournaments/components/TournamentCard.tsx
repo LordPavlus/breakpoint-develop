@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card"
 import { priceFormatter } from "@/app/trainings/components/TrainingSlotCard"
 import { ntrpLabels } from "@/lib/ntrp"
+import { registerForTournament } from "@/server/actions/tournaments"
 
 export const formatLabels: Record<Tournament["format"], string> = {
   GROUP_PLAYOFF: "Группы + плей-офф",
@@ -116,13 +117,12 @@ export function TournamentCard({
           >
             Подробнее
           </Button>
-          <Button
-            render={<Link href={`/tournaments/${tournament.id}`} />}
-            nativeButton={false}
-            className="bg-green-600 text-white hover:bg-green-700"
-          >
-            Участвовать
-          </Button>
+          <form action={registerForTournament.bind(null, {}) as unknown as (fd: FormData) => Promise<void>}>
+            <input type="hidden" name="tournamentId" value={tournament.id} />
+            <Button type="submit" className="bg-green-600 text-white hover:bg-green-700">
+              Участвовать
+            </Button>
+          </form>
         </div>
       </CardFooter>
     </Card>
