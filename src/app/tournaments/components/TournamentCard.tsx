@@ -104,17 +104,26 @@ export function TournamentCard({
           {tournament.maxParticipants ? ` / ${tournament.maxParticipants}` : ""}
         </div>
       </CardContent>
-      <CardFooter className="flex items-center justify-between">
+      <CardFooter className="flex items-center justify-between gap-2">
         <span className="text-lg font-semibold text-foreground">
           {priceFormatter.format(tournament.entryFee.toNumber())}
         </span>
-        <Button
-          render={<Link href={`/tournaments/${tournament.id}`} />}
-          nativeButton={false}
-          variant="outline"
-        >
-          Подробнее
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            render={<Link href={`/tournaments/${tournament.id}`} />}
+            nativeButton={false}
+            variant="outline"
+          >
+            Подробнее
+          </Button>
+          <Button
+            render={<Link href={`/tournaments/${tournament.id}`} />}
+            nativeButton={false}
+            className="bg-green-600 text-white hover:bg-green-700"
+          >
+            Участвовать
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   )
