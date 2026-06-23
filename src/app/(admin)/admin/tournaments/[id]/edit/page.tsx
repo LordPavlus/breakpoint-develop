@@ -11,8 +11,11 @@ export default async function EditTournamentPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const tournament = await prisma.tournament.findUnique({ where: { id } })
-  if (!tournament) notFound()
+  const raw = await prisma.tournament.findUnique({ where: { id } })
+  if (!raw) notFound()
+
+  // Конвертируем Decimal → number для Client Component
+  const tournament = { ...raw, entryFee: raw.entryFee.toNumber() }
 
   return (
     <div className="max-w-xl space-y-6">

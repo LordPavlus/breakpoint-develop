@@ -75,7 +75,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           <Trophy className="size-5" />
         </div>
         <CardTitle className="text-lg">{tournament.title}</CardTitle>
-        {ntrpRange && <CardDescription>{ntrpRange}</CardDescription>}
+        <CardDescription>{ntrpRange ?? "NTRP: любое"}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">

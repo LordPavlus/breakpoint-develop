@@ -1,7 +1,7 @@
 "use client"
 
 import { useActionState } from "react"
-import type { NtrpLevel, TournamentFormat, Tournament } from "@prisma/client"
+import type { NtrpLevel, TournamentFormat, TournamentStatus } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,7 +27,25 @@ function toDatetimeLocal(date: Date | null): string {
   return d.toISOString().slice(0, 16)
 }
 
-export function EditTournamentForm({ tournament }: { tournament: Tournament }) {
+type TournamentData = {
+  id: string
+  title: string
+  description: string
+  format: TournamentFormat
+  status: TournamentStatus
+  entryFee: number
+  location: string | null
+  startsAt: Date
+  endsAt: Date | null
+  registrationDeadline: Date
+  minParticipants: number | null
+  maxParticipants: number | null
+  minNtrpLevel: NtrpLevel | null
+  maxNtrpLevel: NtrpLevel | null
+  prizePoolDescription: string | null
+}
+
+export function EditTournamentForm({ tournament }: { tournament: TournamentData }) {
   const [state, formAction, pending] = useActionState(updateTournament, initialState)
 
   return (
@@ -65,7 +83,7 @@ export function EditTournamentForm({ tournament }: { tournament: Tournament }) {
         <div className="space-y-1.5">
           <Label htmlFor="entryFee">Взнос, ₽</Label>
           <Input id="entryFee" name="entryFee" type="number" min={0} step="1"
-            defaultValue={tournament.entryFee.toNumber()} required />
+            defaultValue={tournament.entryFee} required />
         </div>
       </div>
 
