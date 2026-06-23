@@ -5,10 +5,16 @@ import { Button } from "@/components/ui/button"
 import { TournamentsAdminList } from "./TournamentsAdminList"
 
 export default async function AdminTournamentsPage() {
-  const tournaments = await prisma.tournament.findMany({
+  const raw = await prisma.tournament.findMany({
     include: { _count: { select: { registrations: true } } },
     orderBy: { startsAt: "asc" },
   })
+
+  // Конвертируем Decimal → number перед передачей в Client Component
+  const tournaments = raw.map((t) => ({
+    ...t,
+    entryFee: t.entryFee.toNumber(),
+  }))
 
   return (
     <div className="space-y-4">

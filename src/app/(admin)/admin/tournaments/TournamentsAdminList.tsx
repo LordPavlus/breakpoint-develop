@@ -2,7 +2,7 @@
 
 import { useState, useActionState } from "react"
 import Link from "next/link"
-import type { Tournament } from "@prisma/client"
+import type { TournamentStatus, TournamentFormat, NtrpLevel } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -26,11 +26,24 @@ import {
   type BulkUpdateStatusState,
 } from "@/server/actions/tournaments"
 
-type TournamentWithCount = Tournament & { _count: { registrations: number } }
+type TournamentItem = {
+  id: string
+  title: string
+  status: TournamentStatus
+  format: TournamentFormat
+  entryFee: number
+  location: string | null
+  startsAt: Date
+  endsAt: Date | null
+  maxParticipants: number | null
+  minNtrpLevel: NtrpLevel | null
+  maxNtrpLevel: NtrpLevel | null
+  _count: { registrations: number }
+}
 
 const initialBulkState: BulkUpdateStatusState = {}
 
-export function TournamentsAdminList({ tournaments }: { tournaments: TournamentWithCount[] }) {
+export function TournamentsAdminList({ tournaments }: { tournaments: TournamentItem[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkState, bulkAction, bulkPending] = useActionState(
     bulkUpdateTournamentStatus,
@@ -132,7 +145,7 @@ export function TournamentsAdminList({ tournaments }: { tournaments: TournamentW
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {formatDateRange(t.startsAt, t.endsAt)} · {formatLabels[t.format]} ·{" "}
-                  {priceFormatter.format(t.entryFee.toNumber())} ·{" "}
+                  {priceFormatter.format(t.entryFee)} ·{" "}
                   участников: {t._count.registrations}
                   {t.maxParticipants ? ` / ${t.maxParticipants}` : ""}
                   {t.location ? ` · ${t.location}` : ""}
