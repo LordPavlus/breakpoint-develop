@@ -1,0 +1,591 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =====================================================================
+// Пользователи и авторизация
+// =====================================================================
+
+enum UserRole {
+  PLAYER
+  COACH
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  emailVerified DateTime?
+  name          String?
+  image         String? // URL фото в R2
+  role          UserRole  @default(PLAYER)
+  phone         String?
+
+  telegramId       String? @unique
+  telegramUsername String?
+
+  referralCode String? @unique // короткий код для приглашения друзей — генерируется лениво
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts      Account[] // OAuth (Yandex, VK) — Фаза 2
+  playerProfile PlayerProfile?
+  coachProfile  CoachProfile?
+
+  bookings          Booking[]                @relation("PlayerBookings")
+  payments          Payment[]
+  tournamentEntries TournamentRegistration[]
+  reviewsWritten    Review[]                 @relation("ReviewAuthor")
+
+  groupStandings   GroupStanding[]
+  matchesAsPlayer1 Match[]                    @relation("MatchPlayer1")
+  matchesAsPlayer2 Match[]                    @relation("MatchPlayer2")
+  matchesWon       Match[]                    @relation("MatchWinner")
+
+  promoCodesOwned  PromoCode[]           @relation("PromoCodeOwner")
+  promoRedemptions PromoCodeRedemption[]
+  referralsMade    Referral[]            @relation("ReferralsMade")
+  referralReceived Referral?             @relation("ReferralReceived")
+
+  pushSubscriptions PushSubscription[]
+}
+
+// Стандартная модель @auth/prisma-adapter для OAuth-провайдеров (Yandex, VK — Фаза 2)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+// Переиспользуется под email-OTP: identifier=email, token=sha256-хэш 6-значного кода
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@index([identifier])
+}
+
+// =====================================================================
+// Профили
+// =====================================================================
+
+enum NtrpLevel {
+  NTRP_1_0
+  NTRP_1_5
+  NTRP_2_0
+  NTRP_2_5
+  NTRP_3_0
+  NTRP_3_5
+  NTRP_4_0
+  NTRP_4_5
+  NTRP_5_0
+  NTRP_5_5
+  NTRP_6_0_PLUS
+}
+
+model PlayerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio          String?
+  ntrpLevel    NtrpLevel?
+  ntrpVideoUrl String? // видео для оценки уровня (3-шаговый флоу с лендинга)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CoachProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio            String?
+  specialization String[] // напр. ["Техника удара", "Юниоры", "Подготовка к турнирам"]
+
+  ratingAvg   Float? // денормализованный агрегат по Review.rating
+  ratingCount Int    @default(0)
+
+  payoutInfo String? // MVP: текст для админа — карта/телефон СБП для ручного перевода
+
+  slots   TrainingSlot[]
+  payouts Payout[]
+  reviews Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =====================================================================
+// Тренировки: слоты и бронирования
+// =====================================================================
+
+enum SlotStatus {
+  AVAILABLE
+  BOOKED
+  CANCELLED
+  COMPLETED
+}
+
+model TrainingSlot {
+  id      String       @id @default(cuid())
+  coachId String
+  coach   CoachProfile @relation(fields: [coachId], references: [id])
+
+  startsAt DateTime
+  endsAt   DateTime
+  location String // корт/адрес
+  price    Decimal    @db.Decimal(10, 2)
+  status   SlotStatus @default(AVAILABLE)
+
+  booking Booking? // 1:1 — один слот = максимум одна активная бронь
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startsAt, status]) // выборка ближайших доступных слотов
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  PAID
+  CANCELLED
+  COMPLETED_CONFIRMED // игрок подтвердил + оценил
+}
+
+model Booking {
+  id String @id @default(cuid())
+
+  slotId String       @unique // гарантия "1 активная бронь на слот" на уровне БД
+  slot   TrainingSlot @relation(fields: [slotId], references: [id])
+
+  playerId String
+  player   User   @relation("PlayerBookings", fields: [playerId], references: [id])
+
+  status         BookingStatus @default(PENDING_PAYMENT)
+  priceAtBooking Decimal       @db.Decimal(10, 2) // фиксация цены на момент брони
+
+  confirmedAt    DateTime?
+  reminderSentAt DateTime? // напоминание за 24ч до тренировки отправлено
+
+  payment         Payment?
+  review          Review?
+  payout          Payout?
+  promoRedemption PromoCodeRedemption?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([playerId, status])
+}
+
+// =====================================================================
+// Платежи и выплаты
+// =====================================================================
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  CANCELED
+  REFUNDED
+}
+
+enum PaymentPurpose {
+  TRAINING_BOOKING
+  TOURNAMENT_ENTRY
+}
+
+model Payment {
+  id         String @id @default(cuid())
+  yookassaId String @unique
+
+  purpose  PaymentPurpose
+  amount   Decimal        @db.Decimal(10, 2)
+  currency String         @default("RUB")
+  status   PaymentStatus  @default(PENDING)
+
+  bookingId String?  @unique
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+
+  tournamentRegistrationId String?                  @unique
+  tournamentRegistration   TournamentRegistration? @relation(fields: [tournamentRegistrationId], references: [id])
+
+  payerId String
+  payer   User   @relation(fields: [payerId], references: [id])
+
+  confirmationUrl String? // URL редиректа на оплату
+  idempotenceKey  String  @unique
+  rawPayload      Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PayoutStatus {
+  PENDING // рассчитано, ждёт ручного перевода (MVP) / отправки через провайдера (Фаза 2)
+  PAID // переведено (вручную админом в MVP, либо succeeded в Фазе 2)
+  CANCELED
+}
+
+model Payout {
+  id        String       @id @default(cuid())
+  bookingId String       @unique
+  booking   Booking      @relation(fields: [bookingId], references: [id])
+  coachId   String
+  coach     CoachProfile @relation(fields: [coachId], references: [id])
+
+  grossAmount      Decimal @db.Decimal(10, 2) // цена тренировки
+  commissionPct    Decimal @db.Decimal(5, 2) // % комиссии на момент расчёта (зафиксирован)
+  commissionAmount Decimal @db.Decimal(10, 2)
+  netAmount        Decimal @db.Decimal(10, 2) // gross − commission
+
+  status        PayoutStatus @default(PENDING)
+  paidAt        DateTime? // когда админ отметил выплаченным (MVP)
+  paidByAdminId String?
+  adminNote     String? // референс перевода (MVP)
+
+  // Поля для Фазы 2 (автовыплаты через провайдера):
+  yookassaId     String? @unique
+  idempotenceKey String? @unique
+  rawPayload     Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Идемпотентность вебхуков
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  source      String // "yookassa"
+  eventType   String // "payment.succeeded" и т.д.
+  externalId  String // payment.id / payout.id
+  payload     Json
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([source, eventType, externalId])
+}
+
+// =====================================================================
+// Push-уведомления (Web Push / VAPID)
+// =====================================================================
+
+model PushSubscription {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// =====================================================================
+// Отзывы
+// =====================================================================
+
+model Review {
+  id String @id @default(cuid())
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
+  authorId String
+  author   User   @relation("ReviewAuthor", fields: [authorId], references: [id])
+
+  coachId String
+  coach   CoachProfile @relation(fields: [coachId], references: [id])
+
+  rating  Int // 1..5
+  comment String?
+
+  createdAt DateTime @default(now())
+}
+
+// =====================================================================
+// Турниры (Фаза 2)
+// =====================================================================
+
+enum TournamentFormat {
+  GROUP_PLAYOFF
+  SINGLE_ELIM
+}
+
+enum TournamentStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  GROUP_STAGE
+  PLAYOFF_STAGE
+  COMPLETED
+  CANCELLED
+}
+
+model Tournament {
+  id String @id @default(cuid())
+
+  title       String
+  description String           @db.Text
+  format      TournamentFormat @default(GROUP_PLAYOFF)
+  status      TournamentStatus @default(DRAFT)
+
+  entryFee             Decimal @db.Decimal(10, 2)
+  prizePoolDescription String? @db.Text
+
+  location             String?
+  startsAt             DateTime
+  endsAt               DateTime?
+  registrationDeadline DateTime
+
+  minParticipants Int?
+  maxParticipants Int?
+
+  minNtrpLevel NtrpLevel?
+  maxNtrpLevel NtrpLevel?
+
+  reminderSentAt DateTime? // напоминание за 24ч до старта отправлено участникам
+
+  registrations TournamentRegistration[]
+  groups        TournamentGroup[]
+  matches       Match[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, registrationDeadline])
+}
+
+enum TournamentRegistrationStatus {
+  PENDING_PAYMENT
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+model TournamentRegistration {
+  id String @id @default(cuid())
+
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+
+  playerId String
+  player   User   @relation(fields: [playerId], references: [id])
+
+  status           TournamentRegistrationStatus @default(PENDING_PAYMENT)
+  ntrpLevelAtEntry NtrpLevel? // снимок уровня на момент регистрации — для распределения по группам
+
+  feeAtRegistration Decimal? @db.Decimal(10, 2) // взнос с учётом промокода/реферальной скидки на момент регистрации
+
+  payment         Payment?
+  promoRedemption PromoCodeRedemption?
+
+  groupId String?
+  group   TournamentGroup? @relation(fields: [groupId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tournamentId, playerId])
+}
+
+// =====================================================================
+// Группы, турнирная таблица, плей-офф (Фаза 2)
+// =====================================================================
+
+model TournamentGroup {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+
+  name String // "Группа A", "Группа B"...
+
+  registrations TournamentRegistration[]
+  standings     GroupStanding[]
+  matches       Match[]                   @relation("GroupMatches")
+
+  createdAt DateTime @default(now())
+
+  @@unique([tournamentId, name])
+}
+
+// Денормализованная турнирная таблица группы
+model GroupStanding {
+  id      String          @id @default(cuid())
+  groupId String
+  group   TournamentGroup @relation(fields: [groupId], references: [id])
+
+  playerId String
+  player   User   @relation(fields: [playerId], references: [id])
+
+  played   Int @default(0)
+  wins     Int @default(0)
+  losses   Int @default(0)
+  setsWon  Int @default(0)
+  setsLost Int @default(0)
+  points   Int @default(0)
+
+  @@unique([groupId, playerId])
+  @@index([groupId, points])
+}
+
+enum MatchStage {
+  GROUP
+  ROUND_OF_32
+  ROUND_OF_16
+  QUARTERFINAL
+  SEMIFINAL
+  FINAL
+  THIRD_PLACE
+}
+
+enum MatchStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  WALKOVER
+  CANCELLED
+}
+
+model Match {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+
+  groupId String?
+  group   TournamentGroup? @relation("GroupMatches", fields: [groupId], references: [id])
+
+  stage           MatchStage
+  bracketPosition Int? // индекс матча в раунде, для построения дерева
+  nextMatchId     String?
+  nextMatch       Match?      @relation("MatchProgression", fields: [nextMatchId], references: [id])
+  feedsInto       Match[]     @relation("MatchProgression")
+
+  player1Id String?
+  player1   User?   @relation("MatchPlayer1", fields: [player1Id], references: [id])
+  player2Id String?
+  player2   User?   @relation("MatchPlayer2", fields: [player2Id], references: [id])
+
+  scheduledAt DateTime?
+  status      MatchStatus @default(SCHEDULED)
+
+  score    Json? // напр. [[6,4],[3,6],[6,2]]
+  winnerId String?
+  winner   User?   @relation("MatchWinner", fields: [winnerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tournamentId, stage])
+}
+
+// =====================================================================
+// Настройки платформы
+// =====================================================================
+
+model AdminSettings {
+  id String @id @default("singleton")
+
+  minTrainingPrice      Decimal @db.Decimal(10, 2) @default(500)
+  maxTrainingPrice      Decimal @db.Decimal(10, 2) @default(10000)
+  platformCommissionPct Decimal @db.Decimal(5, 2) @default(30)
+
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+}
+
+// =====================================================================
+// Промокоды и реферальная программа (Фаза 3)
+// =====================================================================
+
+enum PromoDiscountType {
+  PERCENT
+  FIXED
+}
+
+enum PromoScope {
+  ALL
+  TRAINING_BOOKING
+  TOURNAMENT_ENTRY
+}
+
+model PromoCode {
+  id            String            @id @default(cuid())
+  code          String            @unique
+  discountType  PromoDiscountType
+  discountValue Decimal           @db.Decimal(10, 2)
+  scope         PromoScope        @default(ALL)
+
+  maxUses   Int? // null — без ограничения
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  active    Boolean   @default(true)
+
+  // Если задан — код может погасить только этот пользователь (реферальные награды)
+  ownerId String?
+  owner   User?   @relation("PromoCodeOwner", fields: [ownerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  redemptions    PromoCodeRedemption[]
+  referralReward Referral?             @relation("ReferralReward")
+}
+
+model PromoCodeRedemption {
+  id          String    @id @default(cuid())
+  promoCodeId String
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  bookingId                String?                 @unique
+  booking                  Booking?                @relation(fields: [bookingId], references: [id])
+  tournamentRegistrationId String?                 @unique
+  tournamentRegistration   TournamentRegistration? @relation(fields: [tournamentRegistrationId], references: [id])
+
+  discountAmount Decimal  @db.Decimal(10, 2)
+  createdAt      DateTime @default(now())
+
+  @@unique([promoCodeId, userId])
+}
+
+// Связь "пригласивший → приглашённый" — создаётся при первой покупке
+// приглашённого с реферальным кодом пригласившего (User.referralCode).
+// rewardPromoCode — одноразовый бонусный промокод, выданный пригласившему.
+model Referral {
+  id         String @id @default(cuid())
+  referrerId String
+  referrer   User   @relation("ReferralsMade", fields: [referrerId], references: [id])
+  referredId String @unique
+  referred   User   @relation("ReferralReceived", fields: [referredId], references: [id])
+
+  rewardPromoCodeId String?    @unique
+  rewardPromoCode   PromoCode? @relation("ReferralReward", fields: [rewardPromoCodeId], references: [id])
+
+  createdAt DateTime @default(now())
+}
