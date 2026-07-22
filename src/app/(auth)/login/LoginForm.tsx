@@ -25,6 +25,17 @@ export function LoginForm() {
         />
         {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
       </div>
+      <label className="flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          name="role"
+          value="coach"
+          className="accent-primary"
+        />
+        <span className="text-sm text-muted-foreground">
+          Регистрируюсь как тренер
+        </span>
+      </label>
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Отправляем код…" : "Получить код"}
       </Button>

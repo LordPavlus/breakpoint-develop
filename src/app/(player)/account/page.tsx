@@ -38,14 +38,15 @@ export default async function AccountPage() {
       <ProfileForm
         email={user.email ?? ""}
         name={user.name ?? ""}
+        phone={user.phone ?? ""}
         bio={user.playerProfile?.bio ?? ""}
         ntrpLevel={user.playerProfile?.ntrpLevel ?? null}
+        weekdayAvailability={user.playerProfile?.weekdayAvailability ?? ""}
+        weekendAvailability={user.playerProfile?.weekendAvailability ?? ""}
+        preferredDays={user.playerProfile?.preferredDays ?? []}
+        preferredDistricts={user.playerProfile?.preferredDistricts ?? []}
       />
-      <TelegramSection
-        botUsername={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}
-        hasTelegram={!!user.telegramId}
-        telegramUsername={user.telegramUsername}
-      />
+      <TelegramSection telegramUsername={user.telegramUsername} />
       <PushNotificationToggle />
       <ReferralSection
         referralCode={referralCode}

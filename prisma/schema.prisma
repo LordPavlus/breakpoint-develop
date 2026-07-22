@@ -112,6 +112,11 @@ model PlayerProfile {
   ntrpLevel    NtrpLevel?
   ntrpVideoUrl String? // видео для оценки уровня (3-шаговый флоу с лендинга)
 
+  weekdayAvailability String?
+  weekendAvailability String?
+  preferredDays       String[]
+  preferredDistricts  String[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

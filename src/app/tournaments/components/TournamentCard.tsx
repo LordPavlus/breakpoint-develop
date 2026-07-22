@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card"
 import { priceFormatter } from "@/app/trainings/components/TrainingSlotCard"
 import { ntrpLabels } from "@/lib/ntrp"
+import { registerForTournament } from "@/server/actions/tournaments"
 
 export const formatLabels: Record<Tournament["format"], string> = {
   GROUP_PLAYOFF: "Группы + плей-офф",
@@ -62,10 +63,16 @@ export function ntrpRangeLabel(
   if (min && max) return `NTRP ${ntrpLabels[min]}–${ntrpLabels[max]}`
   if (min) return `NTRP ${ntrpLabels[min]}+`
   if (max) return `NTRP до ${ntrpLabels[max]}`
-  return null
+  return "NTRP любое"
 }
 
-export function TournamentCard({ tournament }: { tournament: Tournament }) {
+export function TournamentCard({
+  tournament,
+  registrationsCount = 0,
+}: {
+  tournament: Tournament
+  registrationsCount?: number
+}) {
   const ntrpRange = ntrpRangeLabel(tournament.minNtrpLevel, tournament.maxNtrpLevel)
 
   return (
@@ -75,7 +82,7 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           <Trophy className="size-5" />
         </div>
         <CardTitle className="text-lg">{tournament.title}</CardTitle>
-        {ntrpRange && <CardDescription>{ntrpRange}</CardDescription>}
+        <CardDescription>{ntrpRange}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
@@ -92,18 +99,31 @@ export function TournamentCard({ tournament }: { tournament: Tournament }) {
           <Users className="size-4" />
           {formatLabels[tournament.format]}
         </div>
+        <div className="flex items-center gap-2">
+          <Users className="size-4" />
+          Участников: {registrationsCount}
+          {tournament.maxParticipants ? ` / ${tournament.maxParticipants}` : ""}
+        </div>
       </CardContent>
-      <CardFooter className="flex items-center justify-between">
+      <CardFooter className="flex items-center justify-between gap-2">
         <span className="text-lg font-semibold text-foreground">
           {priceFormatter.format(tournament.entryFee.toNumber())}
         </span>
-        <Button
-          render={<Link href={`/tournaments/${tournament.id}`} />}
-          nativeButton={false}
-          variant="outline"
-        >
-          Подробнее
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            render={<Link href={`/tournaments/${tournament.id}`} />}
+            nativeButton={false}
+            variant="outline"
+          >
+            Подробнее
+          </Button>
+          <form action={registerForTournament.bind(null, {}) as unknown as (fd: FormData) => Promise<void>}>
+            <input type="hidden" name="tournamentId" value={tournament.id} />
+            <Button type="submit">
+              Участвовать
+            </Button>
+          </form>
+        </div>
       </CardFooter>
     </Card>
   )

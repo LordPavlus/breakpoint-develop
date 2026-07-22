@@ -251,6 +251,98 @@ export async function createTournament(
   redirect("/admin/tournaments")
 }
 
+export type UpdateTournamentState = {
+  error?: string
+}
+
+export async function updateTournament(
+  _prevState: UpdateTournamentState,
+  formData: FormData
+): Promise<UpdateTournamentState> {
+  const session = await auth()
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { error: "Не авторизован" }
+  }
+
+  const tournamentId = String(formData.get("tournamentId") ?? "")
+  if (!tournamentId) return { error: "Турнир не указан" }
+
+  const title = String(formData.get("title") ?? "").trim()
+  const description = String(formData.get("description") ?? "").trim()
+  const formatRaw = String(formData.get("format") ?? "")
+  const entryFee = Number(formData.get("entryFee"))
+  const location = String(formData.get("location") ?? "").trim()
+  const startsAtRaw = String(formData.get("startsAt") ?? "")
+  const endsAtRaw = String(formData.get("endsAt") ?? "")
+  const registrationDeadlineRaw = String(formData.get("registrationDeadline") ?? "")
+  const minParticipantsRaw = String(formData.get("minParticipants") ?? "")
+  const maxParticipantsRaw = String(formData.get("maxParticipants") ?? "")
+  const minNtrpLevelRaw = String(formData.get("minNtrpLevel") ?? "")
+  const maxNtrpLevelRaw = String(formData.get("maxNtrpLevel") ?? "")
+  const prizePoolDescription = String(formData.get("prizePoolDescription") ?? "").trim()
+
+  if (!title) return { error: "Укажите название" }
+  if (!description) return { error: "Укажите описание" }
+  if (!formatValues.has(formatRaw)) return { error: "Некорректный формат" }
+  if (!Number.isFinite(entryFee) || entryFee < 0) return { error: "Некорректный взнос" }
+
+  const startsAt = new Date(startsAtRaw)
+  if (Number.isNaN(startsAt.getTime())) return { error: "Укажите дату начала" }
+
+  const registrationDeadline = new Date(registrationDeadlineRaw)
+  if (Number.isNaN(registrationDeadline.getTime())) return { error: "Укажите дедлайн регистрации" }
+
+  const endsAt = endsAtRaw ? new Date(endsAtRaw) : null
+
+  const minParticipants = minParticipantsRaw ? Number(minParticipantsRaw) : null
+  const maxParticipants = maxParticipantsRaw ? Number(maxParticipantsRaw) : null
+  const minNtrpLevel = ntrpValues.has(minNtrpLevelRaw) ? (minNtrpLevelRaw as NtrpLevel) : null
+  const maxNtrpLevel = ntrpValues.has(maxNtrpLevelRaw) ? (maxNtrpLevelRaw as NtrpLevel) : null
+
+  await prisma.tournament.update({
+    where: { id: tournamentId },
+    data: {
+      title, description,
+      format: formatRaw as TournamentFormat,
+      entryFee, location: location || null,
+      startsAt, endsAt, registrationDeadline,
+      minParticipants, maxParticipants,
+      minNtrpLevel, maxNtrpLevel,
+      prizePoolDescription: prizePoolDescription || null,
+    },
+  })
+
+  revalidatePath("/admin/tournaments")
+  revalidatePath(`/admin/tournaments/${tournamentId}`)
+  revalidatePath("/tournaments")
+  redirect(`/admin/tournaments/${tournamentId}`)
+}
+
+export type BulkUpdateStatusState = { error?: string }
+
+export async function bulkUpdateTournamentStatus(
+  _prevState: BulkUpdateStatusState,
+  formData: FormData
+): Promise<BulkUpdateStatusState> {
+  const session = await auth()
+  if (!session?.user || session.user.role !== "ADMIN") return { error: "Не авторизован" }
+
+  const ids = formData.getAll("ids").map(String).filter(Boolean)
+  const statusRaw = String(formData.get("status") ?? "")
+
+  if (ids.length === 0) return { error: "Выберите хотя бы один турнир" }
+  if (!statusValues.has(statusRaw)) return { error: "Некорректный статус" }
+
+  await prisma.tournament.updateMany({
+    where: { id: { in: ids } },
+    data: { status: statusRaw as TournamentStatus },
+  })
+
+  revalidatePath("/admin/tournaments")
+  revalidatePath("/tournaments")
+  return {}
+}
+
 export type UpdateTournamentStatusState = {
   error?: string
 }

@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation"
+import Link from "next/link"
 import type { Match } from "@prisma/client"
 
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { priceFormatter } from "@/app/trainings/components/TrainingSlotCard"
 import {
   formatDateRange,
@@ -124,9 +126,19 @@ export default async function AdminTournamentDetailPage({
             {tournament.maxParticipants ? ` / ${tournament.maxParticipants}` : ""}
           </p>
         </div>
-        {tournament.status === "REGISTRATION_OPEN" && (
-          <CloseRegistrationButton tournamentId={tournament.id} />
-        )}
+        <div className="flex gap-2">
+          <Button
+            render={<Link href={`/admin/tournaments/${id}/edit`} />}
+            nativeButton={false}
+            variant="outline"
+            size="sm"
+          >
+            Редактировать
+          </Button>
+          {tournament.status === "REGISTRATION_OPEN" && (
+            <CloseRegistrationButton tournamentId={tournament.id} />
+          )}
+        </div>
       </div>
 
       {groups.length > 0 && (

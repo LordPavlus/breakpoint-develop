@@ -5,6 +5,7 @@ export default async function TournamentsPage() {
   const tournaments = await prisma.tournament.findMany({
     where: { status: "REGISTRATION_OPEN" },
     orderBy: { startsAt: "asc" },
+    include: { _count: { select: { registrations: { where: { status: { not: "CANCELLED" } } } } } },
   })
 
   return (
@@ -26,7 +27,11 @@ export default async function TournamentsPage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {tournaments.map((tournament) => (
-            <TournamentCard key={tournament.id} tournament={tournament} />
+            <TournamentCard
+              key={tournament.id}
+              tournament={tournament}
+              registrationsCount={tournament._count.registrations}
+            />
           ))}
         </div>
       )}

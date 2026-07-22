@@ -8,12 +8,13 @@ import { verifyOtp, type VerifyOtpState } from "@/server/actions/auth"
 
 const initialState: VerifyOtpState = {}
 
-export function VerifyForm({ email }: { email: string }) {
+export function VerifyForm({ email, role }: { email: string; role?: string }) {
   const [state, formAction, pending] = useActionState(verifyOtp, initialState)
 
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="email" value={email} />
+      {role && <input type="hidden" name="role" value={role} />}
       <div className="space-y-1.5">
         <Label htmlFor="code">Код из письма</Label>
         <Input

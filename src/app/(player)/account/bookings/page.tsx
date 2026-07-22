@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import { CalendarDays, MapPin, Star } from "lucide-react"
 import type { Prisma } from "@prisma/client"
@@ -5,6 +6,7 @@ import type { Prisma } from "@prisma/client"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
   capitalize,
@@ -19,6 +21,7 @@ type BookingWithDetails = Prisma.BookingGetPayload<{
   include: {
     slot: { include: { coach: { include: { user: true } } } }
     review: true
+    payment: { select: { confirmationUrl: true } }
   }
 }>
 
@@ -52,6 +55,7 @@ export default async function AccountBookingsPage() {
     include: {
       slot: { include: { coach: { include: { user: true } } } },
       review: true,
+      payment: { select: { confirmationUrl: true } },
     },
     orderBy: { slot: { startsAt: "desc" } },
   })
@@ -141,7 +145,18 @@ function BookingRow({ booking }: { booking: BookingWithDetails }) {
         </div>
       </div>
 
-      {canCancel && <CancelBookingButton bookingId={booking.id} />}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {booking.status === "PENDING_PAYMENT" && booking.payment?.confirmationUrl && (
+          <Button
+            render={<Link href={booking.payment.confirmationUrl} />}
+            nativeButton={false}
+            size="sm"
+          >
+            Продолжить оплату
+          </Button>
+        )}
+        {canCancel && <CancelBookingButton bookingId={booking.id} />}
+      </div>
 
       {canReview && <ReviewForm bookingId={booking.id} />}
 

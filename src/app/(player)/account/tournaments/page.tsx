@@ -15,7 +15,11 @@ import {
 } from "@/app/tournaments/components/TournamentCard"
 
 type RegistrationWithDetails = Prisma.TournamentRegistrationGetPayload<{
-  include: { tournament: true; group: true }
+  include: {
+    tournament: true
+    group: true
+    payment: { select: { confirmationUrl: true } }
+  }
 }>
 
 const registrationStatusLabels: Record<RegistrationWithDetails["status"], string> = {
@@ -45,7 +49,11 @@ export default async function AccountTournamentsPage() {
 
   const registrations = await prisma.tournamentRegistration.findMany({
     where: { playerId: userId },
-    include: { tournament: true, group: true },
+    include: {
+      tournament: true,
+      group: true,
+      payment: { select: { confirmationUrl: true } },
+    },
     orderBy: { tournament: { startsAt: "desc" } },
   })
 
@@ -138,7 +146,16 @@ function RegistrationRow({ registration }: { registration: RegistrationWithDetai
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 flex gap-2">
+        {registration.status === "PENDING_PAYMENT" && registration.payment?.confirmationUrl && (
+          <Button
+            render={<Link href={registration.payment.confirmationUrl} />}
+            nativeButton={false}
+            size="sm"
+          >
+            Продолжить оплату
+          </Button>
+        )}
         <Button
           render={<Link href={`/tournaments/${tournament.id}`} />}
           nativeButton={false}

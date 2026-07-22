@@ -16,14 +16,7 @@ import {
   priceFormatter,
   timeFormatter,
 } from "@/app/trainings/components/TrainingSlotCard"
-import type { Prisma, TrainingSlot } from "@prisma/client"
-
-type SlotWithRelations = Prisma.TrainingSlotGetPayload<{
-  include: {
-    coach: { include: { user: true } }
-    booking: { include: { player: true } }
-  }
-}>
+import type { TrainingSlot } from "@prisma/client"
 
 const statusLabels: Record<TrainingSlot["status"], string> = {
   AVAILABLE: "Свободен",

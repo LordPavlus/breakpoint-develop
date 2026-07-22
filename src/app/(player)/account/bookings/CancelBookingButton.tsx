@@ -11,7 +11,7 @@ export function CancelBookingButton({ bookingId }: { bookingId: string }) {
   const [state, formAction, pending] = useActionState(cancelBooking, initialState)
 
   return (
-    <form action={formAction} className="mt-3">
+    <form action={formAction}>
       <input type="hidden" name="bookingId" value={bookingId} />
       {state?.error && (
         <p className="mb-2 text-sm text-destructive">{state.error}</p>
