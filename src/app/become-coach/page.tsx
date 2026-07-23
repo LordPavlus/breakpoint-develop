@@ -13,7 +13,7 @@ export default async function BecomeCoachPage() {
   const userId = session?.user?.id
 
   if (!userId) {
-    redirect("/login")
+    redirect("/login?callbackUrl=/become-coach")
   }
   if (session.user.role === "COACH") {
     redirect("/coach")

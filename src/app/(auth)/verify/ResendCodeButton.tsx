@@ -9,9 +9,11 @@ const initialState: RequestOtpState = {}
 
 export function ResendCodeButton({
   email,
+  callbackUrl,
   resendSeconds,
 }: {
   email: string
+  callbackUrl?: string
   resendSeconds: number
 }) {
   const [state, formAction, pending] = useActionState(requestOtp, initialState)
@@ -30,6 +32,7 @@ export function ResendCodeButton({
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="email" value={email} />
+      {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button
         type="submit"

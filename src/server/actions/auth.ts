@@ -16,6 +16,13 @@ import { sendOtpEmail } from "@/lib/email/send-otp"
 
 const emailSchema = z.email({ error: "Введите корректный email" })
 
+// Разрешаем редирект только на относительный путь внутри приложения —
+// иначе callbackUrl можно было бы использовать для открытого редиректа на внешний сайт.
+function safeCallbackUrl(raw: FormDataEntryValue | null): string | null {
+  const url = String(raw ?? "")
+  return url.startsWith("/") && !url.startsWith("//") ? url : null
+}
+
 export type RequestOtpState = {
   error?: string
 }
@@ -31,6 +38,7 @@ export async function requestOtp(
   }
 
   const email = parsed.data.toLowerCase().trim()
+  const callbackUrl = safeCallbackUrl(formData.get("callbackUrl"))
 
   const lastToken = await prisma.verificationToken.findFirst({
     where: { identifier: email },
@@ -57,7 +65,8 @@ export async function requestOtp(
 
   await sendOtpEmail(email, code)
 
-  redirect(`/verify?email=${encodeURIComponent(email)}`)
+  const callbackParam = callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""
+  redirect(`/verify?email=${encodeURIComponent(email)}${callbackParam}`)
 }
 
 export type VerifyOtpState = {
@@ -70,6 +79,7 @@ export async function verifyOtp(
 ): Promise<VerifyOtpState> {
   const email = String(formData.get("email") ?? "").toLowerCase().trim()
   const code = String(formData.get("code") ?? "").trim()
+  const callbackUrl = safeCallbackUrl(formData.get("callbackUrl"))
 
   if (!email || !/^\d{6}$/.test(code)) {
     return { error: "Введите 6-значный код" }
@@ -84,7 +94,7 @@ export async function verifyOtp(
     throw error
   }
 
-  redirect("/")
+  redirect(callbackUrl ?? "/")
 }
 
 export async function signOutAction() {

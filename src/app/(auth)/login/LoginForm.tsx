@@ -8,11 +8,12 @@ import { requestOtp, type RequestOtpState } from "@/server/actions/auth"
 
 const initialState: RequestOtpState = {}
 
-export function LoginForm() {
+export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const [state, formAction, pending] = useActionState(requestOtp, initialState)
 
   return (
     <form action={formAction} className="space-y-4">
+      {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
       <div className="space-y-1.5">
         <Label htmlFor="email">Email</Label>
         <Input

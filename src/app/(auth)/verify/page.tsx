@@ -7,9 +7,9 @@ import { ResendCodeButton } from "./ResendCodeButton"
 export default async function VerifyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string }>
+  searchParams: Promise<{ email?: string; callbackUrl?: string }>
 }) {
-  const { email } = await searchParams
+  const { email, callbackUrl } = await searchParams
 
   if (!email) {
     redirect("/login")
@@ -25,8 +25,12 @@ export default async function VerifyPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <VerifyForm email={email} />
-          <ResendCodeButton email={email} resendSeconds={OTP_RESEND_INTERVAL_MS / 1000} />
+          <VerifyForm email={email} callbackUrl={callbackUrl} />
+          <ResendCodeButton
+            email={email}
+            callbackUrl={callbackUrl}
+            resendSeconds={OTP_RESEND_INTERVAL_MS / 1000}
+          />
           <a
             href="https://t.me/G_Pavel_G"
             target="_blank"

@@ -2,10 +2,10 @@
 
 import { signIn } from "next-auth/react"
 
-export function YandexLoginButton() {
+export function YandexLoginButton({ callbackUrl = "/" }: { callbackUrl?: string }) {
   return (
     <button
-      onClick={() => signIn("yandex", { callbackUrl: "/" })}
+      onClick={() => signIn("yandex", { callbackUrl })}
       className="flex w-full items-center justify-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 active:opacity-80"
       style={{ backgroundColor: "#FC3F1D" }}
     >

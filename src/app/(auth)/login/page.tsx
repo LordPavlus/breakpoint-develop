@@ -11,7 +11,13 @@ import { Separator } from "@/components/ui/separator"
 import { YandexLoginButton } from "@/components/auth/OAuthButtons"
 import { LoginForm } from "./LoginForm"
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>
+}) {
+  const { callbackUrl } = await searchParams
+
   return (
     <div className="mx-auto flex max-w-sm flex-col px-4 py-16 sm:py-24">
       <Card>
@@ -22,7 +28,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <LoginForm />
+          <LoginForm callbackUrl={callbackUrl} />
 
           <div className="flex items-center gap-2">
             <Separator className="flex-1" />
@@ -30,7 +36,7 @@ export default function LoginPage() {
             <Separator className="flex-1" />
           </div>
 
-          <YandexLoginButton />
+          <YandexLoginButton callbackUrl={callbackUrl} />
         </CardContent>
       </Card>
 
