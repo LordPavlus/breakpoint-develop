@@ -91,7 +91,7 @@ export function TrainingSlotCard({
         </div>
         <div className="flex items-center gap-2">
           <Users className="size-4" />
-          Свободно: 1 место
+          Занято: 0 / 1
         </div>
       </CardContent>
       <CardFooter className="flex items-center justify-between">

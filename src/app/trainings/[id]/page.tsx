@@ -187,10 +187,8 @@ export default async function TrainingSlotPage({
             <div className="flex items-start gap-3">
               <Users className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Мест</p>
-                <p className="font-medium text-foreground">
-                  {isBooked ? "0 свободно" : "1 свободно"}
-                </p>
+                <p className="text-xs text-muted-foreground">Занято</p>
+                <p className="font-medium text-foreground">{isBooked ? "1 / 1" : "0 / 1"}</p>
               </div>
             </div>
           </CardContent>

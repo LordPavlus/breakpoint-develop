@@ -9,20 +9,41 @@ import {
   priceFormatter,
   timeFormatter,
 } from "./components/TrainingSlotCard"
+import { DateFilter } from "./DateFilter"
+
+// "YYYY-MM-DD" -> границы суток в локальном времени сервера
+function parseDateKey(key: string): { start: Date; end: Date } | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key)
+  if (!match) return null
+  const [, y, m, d] = match
+  const start = new Date(Number(y), Number(m) - 1, Number(d), 0, 0, 0, 0)
+  if (Number.isNaN(start.getTime())) return null
+  const end = new Date(start)
+  end.setDate(end.getDate() + 1)
+  return { start, end }
+}
 
 export default async function TrainingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ booked?: string }>
+  searchParams: Promise<{ booked?: string; date?: string }>
 }) {
-  const [session, slots, { booked }] = await Promise.all([
+  const { booked, date } = await searchParams
+  const dayRange = date ? parseDateKey(date) : null
+
+  const now = new Date()
+  const rangeStart = dayRange ? (dayRange.start > now ? dayRange.start : now) : now
+
+  const [session, slots] = await Promise.all([
     auth(),
     prisma.trainingSlot.findMany({
-      where: { status: "AVAILABLE", startsAt: { gt: new Date() } },
+      where: {
+        status: "AVAILABLE",
+        startsAt: { gt: rangeStart, ...(dayRange ? { lt: dayRange.end } : {}) },
+      },
       include: { coach: { include: { user: true } } },
       orderBy: { startsAt: "asc" },
     }),
-    searchParams,
   ])
 
   const isAuthenticated = Boolean(session?.user)
@@ -67,10 +88,13 @@ export default async function TrainingsPage({
         </div>
       )}
 
+      <DateFilter selected={date} />
+
       {slots.length === 0 ? (
         <p className="text-muted-foreground">
-          Сейчас нет свободных слотов. Заходите позже — тренеры регулярно
-          добавляют новые тренировки.
+          {dayRange
+            ? "На этот день свободных слотов нет. Попробуйте выбрать другой день."
+            : "Сейчас нет свободных слотов. Заходите позже — тренеры регулярно добавляют новые тренировки."}
         </p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
