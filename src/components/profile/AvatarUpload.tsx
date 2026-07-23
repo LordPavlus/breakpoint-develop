@@ -5,7 +5,7 @@ import { Camera, Loader2, X } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { removeAvatar, requestAvatarUploadUrl, saveAvatarUrl } from "@/server/actions/avatar"
+import { removeAvatar, uploadAvatar } from "@/server/actions/avatar"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const MAX_SIZE = 5 * 1024 * 1024
@@ -58,29 +58,15 @@ export function AvatarUpload({
 
     startTransition(async () => {
       try {
-        const uploadTarget = await requestAvatarUploadUrl(file.type)
-        if ("error" in uploadTarget) {
-          setError(uploadTarget.error)
+        const formData = new FormData()
+        formData.set("file", file)
+        const result = await uploadAvatar(formData)
+        if (result.error || !result.url) {
+          setError(result.error ?? "Не удалось загрузить файл")
           return
         }
 
-        const response = await fetch(uploadTarget.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        })
-        if (!response.ok) {
-          setError("Не удалось загрузить файл. Попробуйте другое фото или повторите позже.")
-          return
-        }
-
-        const result = await saveAvatarUrl(uploadTarget.publicUrl)
-        if (result.error) {
-          setError(result.error)
-          return
-        }
-
-        setPreview(uploadTarget.publicUrl)
+        setPreview(result.url)
       } catch {
         setError(
           "Не удалось загрузить файл — проверьте соединение с интернетом и попробуйте ещё раз."

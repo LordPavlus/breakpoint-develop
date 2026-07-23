@@ -1,5 +1,4 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3"
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 import { r2Client, r2Configured } from "@/lib/storage/s3"
 
@@ -9,16 +8,18 @@ const AVATAR_CONTENT_TYPES: Record<string, string> = {
   "image/webp": "webp",
 }
 
-export type AvatarUploadUrl = { uploadUrl: string; publicUrl: string }
+export type AvatarUploadResult = { publicUrl: string }
 
-// Готовит presigned PUT URL для прямой загрузки фото профиля с клиента в R2
-// (мимо Server Action — большие файлы не должны идти через серверный body).
+// Загружает фото профиля в R2 напрямую с сервера (Server Action получает
+// файл от клиента как обычный same-origin запрос — CORS не участвует,
+// в отличие от прежнего варианта с presigned PUT прямо из браузера в R2).
 // Ключ включает userId и timestamp, чтобы старые фото не перетирались гонкой
 // загрузок и URL менялся при каждой замене (инвалидация кэша/CDN).
-export async function createAvatarUploadUrl(
+export async function uploadAvatarFile(
   userId: string,
-  contentType: string
-): Promise<AvatarUploadUrl | { error: string }> {
+  contentType: string,
+  body: Buffer
+): Promise<AvatarUploadResult | { error: string }> {
   if (!r2Configured || !r2Client) {
     return { error: "Загрузка фото временно недоступна" }
   }
@@ -30,17 +31,14 @@ export async function createAvatarUploadUrl(
 
   const key = `avatars/${userId}-${Date.now()}.${ext}`
 
-  const uploadUrl = await getSignedUrl(
-    r2Client,
+  await r2Client.send(
     new PutObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
       Key: key,
       ContentType: contentType,
-    }),
-    { expiresIn: 300 }
+      Body: body,
+    })
   )
 
-  const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`
-
-  return { uploadUrl, publicUrl }
+  return { publicUrl: `${process.env.R2_PUBLIC_URL}/${key}` }
 }

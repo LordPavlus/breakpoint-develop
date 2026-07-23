@@ -3,11 +3,7 @@
 import { useRef, useState, useTransition } from "react"
 import { ImagePlus, Loader2, X } from "lucide-react"
 
-import {
-  requestCoachPhotoUploadUrl,
-  saveCoachPhoto,
-  removeCoachPhoto,
-} from "@/server/actions/coach-photos"
+import { uploadCoachPhoto, removeCoachPhoto } from "@/server/actions/coach-photos"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const MAX_SIZE = 5 * 1024 * 1024
@@ -43,29 +39,15 @@ export function CoachPhotoGallery({ photos: initialPhotos }: { photos: CoachPhot
 
     startTransition(async () => {
       try {
-        const uploadTarget = await requestCoachPhotoUploadUrl(file.type)
-        if ("error" in uploadTarget) {
-          setError(uploadTarget.error)
-          return
-        }
-
-        const response = await fetch(uploadTarget.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        })
-        if (!response.ok) {
-          setError("Не удалось загрузить файл. Попробуйте другое фото или повторите позже.")
-          return
-        }
-
-        const result = await saveCoachPhoto(uploadTarget.publicUrl)
-        if (result.error || !result.id) {
+        const formData = new FormData()
+        formData.set("file", file)
+        const result = await uploadCoachPhoto(formData)
+        if (result.error || !result.id || !result.url) {
           setError(result.error ?? "Не удалось сохранить фото")
           return
         }
 
-        setPhotos((prev) => [...prev, { id: result.id!, url: uploadTarget.publicUrl }])
+        setPhotos((prev) => [...prev, { id: result.id!, url: result.url! }])
       } catch {
         setError(
           "Не удалось загрузить файл — проверьте соединение с интернетом и попробуйте ещё раз."
