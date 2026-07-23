@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
@@ -39,6 +40,10 @@ export async function updateCoachProfile(
       data: { bio: bio || null, specialization, payoutInfo: payoutInfo || null },
     }),
   ])
+
+  revalidatePath("/coach/profile")
+  revalidatePath("/coach")
+  revalidatePath("/trainings")
 
   return { success: true }
 }

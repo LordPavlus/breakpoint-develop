@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { createAvatarUploadUrl, type AvatarUploadUrl } from "@/lib/storage/avatar"
@@ -27,6 +28,7 @@ export async function saveAvatarUrl(url: string): Promise<{ error?: string }> {
   }
 
   await prisma.user.update({ where: { id: session.user.id }, data: { image: url } })
+  revalidatePath("/", "layout")
   return {}
 }
 
@@ -37,5 +39,6 @@ export async function removeAvatar(): Promise<{ error?: string }> {
   }
 
   await prisma.user.update({ where: { id: session.user.id }, data: { image: null } })
+  revalidatePath("/", "layout")
   return {}
 }

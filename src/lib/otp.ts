@@ -2,7 +2,7 @@ import { createHmac, randomInt } from "crypto"
 
 export const OTP_LENGTH = 6
 export const OTP_TTL_MS = 10 * 60 * 1000
-export const OTP_RESEND_INTERVAL_MS = 60 * 1000
+export const OTP_RESEND_INTERVAL_MS = 90 * 1000
 
 export function generateOtpCode(): string {
   return randomInt(0, 10 ** OTP_LENGTH).toString().padStart(OTP_LENGTH, "0")

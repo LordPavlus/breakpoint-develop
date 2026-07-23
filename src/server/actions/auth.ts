@@ -40,8 +40,10 @@ export async function requestOtp(
 
   if (lastToken) {
     const issuedAt = lastToken.expires.getTime() - OTP_TTL_MS
-    if (Date.now() - issuedAt < OTP_RESEND_INTERVAL_MS) {
-      return { error: "Код уже отправлен. Попробуйте через минуту." }
+    const msLeft = OTP_RESEND_INTERVAL_MS - (Date.now() - issuedAt)
+    if (msLeft > 0) {
+      const secondsLeft = Math.ceil(msLeft / 1000)
+      return { error: `Код уже отправлен. Попробуйте через ${secondsLeft} сек.` }
     }
   }
 
