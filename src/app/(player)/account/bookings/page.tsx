@@ -162,18 +162,26 @@ function BookingRow({ booking }: { booking: BookingWithDetails }) {
 
       {booking.review && (
         <div className="mt-3 rounded-lg bg-muted/50 p-3 text-sm">
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5].map((value) => (
-              <Star
-                key={value}
-                className={cn(
-                  "size-4",
-                  value <= booking.review!.rating
-                    ? "fill-primary text-primary"
-                    : "text-muted-foreground"
-                )}
-              />
-            ))}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <Star
+                  key={value}
+                  className={cn(
+                    "size-4",
+                    value <= booking.review!.rating
+                      ? "fill-primary text-primary"
+                      : "text-muted-foreground"
+                  )}
+                />
+              ))}
+            </div>
+            {booking.review.status === "PENDING" && (
+              <Badge variant="secondary">На модерации</Badge>
+            )}
+            {booking.review.status === "REJECTED" && (
+              <Badge variant="destructive">Отклонён</Badge>
+            )}
           </div>
           {booking.review.comment && (
             <p className="mt-1 text-muted-foreground">

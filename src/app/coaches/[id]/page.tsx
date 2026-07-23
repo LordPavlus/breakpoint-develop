@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { TrainingSlotCard, dateFormatter } from "@/app/trainings/components/TrainingSlotCard"
 import { PhotoLightboxItem } from "@/components/profile/PhotoLightboxItem"
+import { CoachReviewForm } from "./CoachReviewForm"
 
 function initials(name: string) {
   return name
@@ -32,6 +33,7 @@ export default async function CoachPublicProfilePage({
       user: true,
       photos: { orderBy: { createdAt: "desc" } },
       reviews: {
+        where: { status: "APPROVED" },
         include: { author: true },
         orderBy: { createdAt: "desc" },
         take: 20,
@@ -56,6 +58,7 @@ export default async function CoachPublicProfilePage({
   ])
 
   const isAuthenticated = Boolean(session?.user)
+  const isOwnProfile = session?.user?.id === coach.userId
   const coachName = coach.user.name ?? "Тренер"
 
   return (
@@ -164,6 +167,13 @@ export default async function CoachPublicProfilePage({
         <h2 className="mb-4 text-lg font-semibold text-foreground">
           Отзывы {coach.reviews.length > 0 && `(${coach.reviews.length})`}
         </h2>
+
+        {isAuthenticated && !isOwnProfile && (
+          <div className="mb-6">
+            <CoachReviewForm coachId={coach.id} />
+          </div>
+        )}
+
         {coach.reviews.length === 0 ? (
           <p className="text-sm text-muted-foreground">Пока нет отзывов.</p>
         ) : (

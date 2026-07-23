@@ -249,20 +249,9 @@ export async function confirmBooking(
         coachId: booking.slot.coachId,
         rating,
         comment: comment || null,
-      },
-    })
-
-    const stats = await tx.review.aggregate({
-      where: { coachId: booking.slot.coachId },
-      _avg: { rating: true },
-      _count: { rating: true },
-    })
-
-    await tx.coachProfile.update({
-      where: { id: booking.slot.coachId },
-      data: {
-        ratingAvg: stats._avg.rating ?? 0,
-        ratingCount: stats._count.rating,
+        // На модерацию — в рейтинг тренера попадёт только после одобрения
+        // админом (см. server/actions/reviews.ts).
+        status: "PENDING",
       },
     })
 
