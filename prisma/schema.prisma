@@ -131,6 +131,7 @@ model CoachProfile {
 
   bio            String?
   specialization String[] // напр. ["Техника удара", "Юниоры", "Подготовка к турнирам"]
+  achievements   String? // звания/заслуги — напр. "КМС по теннису, финалист чемпионата Москвы 2019"
 
   ratingAvg   Float? // денормализованный агрегат по Review.rating
   ratingCount Int    @default(0)
@@ -140,9 +141,21 @@ model CoachProfile {
   slots   TrainingSlot[]
   payouts Payout[]
   reviews Review[]
+  photos  CoachPhoto[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Фото с тренировок в публичной галерее профиля тренера
+model CoachPhoto {
+  id      String       @id @default(cuid())
+  coachId String
+  coach   CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  url String
+
+  createdAt DateTime @default(now())
 }
 
 enum CoachApplicationStatus {

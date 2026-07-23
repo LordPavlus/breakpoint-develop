@@ -23,6 +23,7 @@ export async function updateCoachProfile(
 
   const name = String(formData.get("name") ?? "").trim()
   const bio = String(formData.get("bio") ?? "").trim()
+  const achievements = String(formData.get("achievements") ?? "").trim()
   const payoutInfo = String(formData.get("payoutInfo") ?? "").trim()
   const specialization = String(formData.get("specialization") ?? "")
     .split(",")
@@ -33,17 +34,23 @@ export async function updateCoachProfile(
     return { error: "Укажите имя" }
   }
 
-  await prisma.$transaction([
+  const [, coachProfile] = await prisma.$transaction([
     prisma.user.update({ where: { id: userId }, data: { name } }),
     prisma.coachProfile.update({
       where: { userId },
-      data: { bio: bio || null, specialization, payoutInfo: payoutInfo || null },
+      data: {
+        bio: bio || null,
+        achievements: achievements || null,
+        specialization,
+        payoutInfo: payoutInfo || null,
+      },
     }),
   ])
 
   revalidatePath("/coach/profile")
   revalidatePath("/coach")
   revalidatePath("/trainings")
+  revalidatePath(`/coaches/${coachProfile.id}`)
 
   return { success: true }
 }

@@ -9,6 +9,7 @@ import { removeAvatar, requestAvatarUploadUrl, saveAvatarUrl } from "@/server/ac
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const MAX_SIZE = 5 * 1024 * 1024
+const MAX_SIZE_LABEL = "5 МБ"
 
 function initials(name: string) {
   return name
@@ -47,46 +48,60 @@ export function AvatarUpload({
       return
     }
     if (file.size > MAX_SIZE) {
-      setError("Файл слишком большой (максимум 5 МБ)")
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1)
+      setError(
+        `Изображение слишком большое (${sizeMb} МБ) — максимум ${MAX_SIZE_LABEL}. ` +
+          `Сожмите фото или уменьшите разрешение перед загрузкой.`
+      )
       return
     }
 
     startTransition(async () => {
-      const uploadTarget = await requestAvatarUploadUrl(file.type)
-      if ("error" in uploadTarget) {
-        setError(uploadTarget.error)
-        return
-      }
+      try {
+        const uploadTarget = await requestAvatarUploadUrl(file.type)
+        if ("error" in uploadTarget) {
+          setError(uploadTarget.error)
+          return
+        }
 
-      const response = await fetch(uploadTarget.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      })
-      if (!response.ok) {
-        setError("Не удалось загрузить файл")
-        return
-      }
+        const response = await fetch(uploadTarget.uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        })
+        if (!response.ok) {
+          setError("Не удалось загрузить файл. Попробуйте другое фото или повторите позже.")
+          return
+        }
 
-      const result = await saveAvatarUrl(uploadTarget.publicUrl)
-      if (result.error) {
-        setError(result.error)
-        return
-      }
+        const result = await saveAvatarUrl(uploadTarget.publicUrl)
+        if (result.error) {
+          setError(result.error)
+          return
+        }
 
-      setPreview(uploadTarget.publicUrl)
+        setPreview(uploadTarget.publicUrl)
+      } catch {
+        setError(
+          "Не удалось загрузить файл — проверьте соединение с интернетом и попробуйте ещё раз."
+        )
+      }
     })
   }
 
   const handleRemove = () => {
     setError(null)
     startTransition(async () => {
-      const result = await removeAvatar()
-      if (result.error) {
-        setError(result.error)
-        return
+      try {
+        const result = await removeAvatar()
+        if (result.error) {
+          setError(result.error)
+          return
+        }
+        setPreview(null)
+      } catch {
+        setError("Не удалось удалить фото. Попробуйте ещё раз.")
       }
-      setPreview(null)
     })
   }
 

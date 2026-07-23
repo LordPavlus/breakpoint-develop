@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, CalendarDays, Clock, MapPin, Star } from "lucide-react"
+import { ArrowLeft, CalendarDays, Clock, MapPin, Star, Users } from "lucide-react"
 import { CheckCircle2 } from "lucide-react"
 
 import { auth } from "@/lib/auth"
@@ -117,6 +117,12 @@ export default async function TrainingSlotPage({
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             {coachName}
           </h1>
+          <Link
+            href={`/coaches/${slot.coachId}`}
+            className="text-sm text-primary underline-offset-4 hover:underline"
+          >
+            Профиль тренера
+          </Link>
           {slot.coach.ratingAvg != null && (
             <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
               <Star className="size-4 fill-primary text-primary" />
@@ -176,6 +182,15 @@ export default async function TrainingSlotPage({
               <div>
                 <p className="text-xs text-muted-foreground">Место</p>
                 <p className="font-medium text-foreground">{slot.location}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Users className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Мест</p>
+                <p className="font-medium text-foreground">
+                  {isBooked ? "0 свободно" : "1 свободно"}
+                </p>
               </div>
             </div>
           </CardContent>

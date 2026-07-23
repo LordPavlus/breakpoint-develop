@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { CalendarDays, MapPin, Star } from "lucide-react"
+import { CalendarDays, MapPin, Star, Users } from "lucide-react"
 import type { Prisma } from "@prisma/client"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -88,6 +88,10 @@ export function TrainingSlotCard({
         <div className="flex items-center gap-2">
           <MapPin className="size-4" />
           {slot.location}
+        </div>
+        <div className="flex items-center gap-2">
+          <Users className="size-4" />
+          Свободно: 1 место
         </div>
       </CardContent>
       <CardFooter className="flex items-center justify-between">

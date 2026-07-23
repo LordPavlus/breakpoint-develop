@@ -14,12 +14,14 @@ export function CoachProfileForm({
   email,
   name,
   bio,
+  achievements,
   specialization,
   payoutInfo,
 }: {
   email: string
   name: string
   bio: string
+  achievements: string
   specialization: string
   payoutInfo: string
 }) {
@@ -44,6 +46,19 @@ export function CoachProfileForm({
           rows={4}
           placeholder="Опыт, методика, достижения"
         />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="achievements">Звания и достижения</Label>
+        <Textarea
+          id="achievements"
+          name="achievements"
+          defaultValue={achievements}
+          rows={3}
+          placeholder="Например: КМС по теннису, финалист чемпионата Москвы 2019"
+        />
+        <p className="text-xs text-muted-foreground">
+          Покажется на публичной странице профиля
+        </p>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="specialization">Специализация</Label>
