@@ -8,7 +8,7 @@ export async function sendOtpEmail(email: string, code: string) {
   }
 
   await resend.emails.send({
-    from: "Break Point <noreply@breakpoint.moscow>",
+    from: "Break Point <noreply@bptennis.ru>",
     to: email,
     subject: `Код для входа: ${code}`,
     html: otpEmailHtml(code),

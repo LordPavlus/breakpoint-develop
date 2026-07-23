@@ -11,7 +11,7 @@ export async function sendBookingPaidEmail(
   }
 
   await resend.emails.send({
-    from: "Break Point <noreply@breakpoint.moscow>",
+    from: "Break Point <noreply@bptennis.ru>",
     to: email,
     subject: "Оплата прошла успешно — тренировка подтверждена",
     html: bookingPaidEmailHtml(params),

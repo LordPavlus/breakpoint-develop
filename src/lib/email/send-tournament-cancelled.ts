@@ -11,7 +11,7 @@ export async function sendTournamentCancelledEmail(
   }
 
   await resend.emails.send({
-    from: "Break Point <noreply@breakpoint.moscow>",
+    from: "Break Point <noreply@bptennis.ru>",
     to: email,
     subject: `Турнир «${params.title}» отменён`,
     html: tournamentCancelledEmailHtml(params),

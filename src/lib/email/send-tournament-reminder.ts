@@ -11,7 +11,7 @@ export async function sendTournamentReminderEmail(
   }
 
   await resend.emails.send({
-    from: "Break Point <noreply@breakpoint.moscow>",
+    from: "Break Point <noreply@bptennis.ru>",
     to: email,
     subject: `Напоминание: завтра старт турнира «${params.title}»`,
     html: tournamentReminderEmailHtml(params),

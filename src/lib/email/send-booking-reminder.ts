@@ -11,7 +11,7 @@ export async function sendBookingReminderEmail(
   }
 
   await resend.emails.send({
-    from: "Break Point <noreply@breakpoint.moscow>",
+    from: "Break Point <noreply@bptennis.ru>",
     to: email,
     subject: "Напоминание: завтра тренировка",
     html: bookingReminderEmailHtml(params),
