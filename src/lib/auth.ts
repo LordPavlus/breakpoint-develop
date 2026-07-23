@@ -19,7 +19,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       id: "email-otp",
       name: "Email OTP",
-      credentials: { email: {}, code: {}, role: {} },
+      credentials: { email: {}, code: {} },
       async authorize(credentials) {
         const email = String(credentials?.email ?? "").toLowerCase().trim()
         const code = String(credentials?.code ?? "").trim()
@@ -35,20 +35,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { identifier_token: { identifier: email, token: tokenHash } },
         })
 
-        // "role" из формы регистрации влияет только на СОЗДАНИЕ нового пользователя —
-        // у существующих аккаунтов роль этим не меняется (апдейт ниже её не трогает).
-        const registerAsCoach = credentials?.role === "coach"
-
         const user = await prisma.user.upsert({
           where: { email },
           update: { emailVerified: new Date() },
-          create: {
-            email,
-            emailVerified: new Date(),
-            ...(registerAsCoach
-              ? { role: "COACH" as UserRole, coachProfile: { create: { specialization: [] } } }
-              : {}),
-          },
+          create: { email, emailVerified: new Date() },
         })
 
         return { id: user.id, email: user.email, name: user.name, role: user.role }

@@ -9,6 +9,7 @@ const tabs = [
   { href: "/admin", label: "Обзор" },
   { href: "/admin/settings", label: "Настройки" },
   { href: "/admin/users", label: "Пользователи" },
+  { href: "/admin/coach-applications", label: "Заявки тренеров" },
   { href: "/admin/payments", label: "Платежи" },
   { href: "/admin/payouts", label: "Выплаты" },
   { href: "/admin/tournaments", label: "Турниры" },

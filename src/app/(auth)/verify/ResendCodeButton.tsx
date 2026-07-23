@@ -9,11 +9,9 @@ const initialState: RequestOtpState = {}
 
 export function ResendCodeButton({
   email,
-  role,
   resendSeconds,
 }: {
   email: string
-  role?: string
   resendSeconds: number
 }) {
   const [state, formAction, pending] = useActionState(requestOtp, initialState)
@@ -32,7 +30,6 @@ export function ResendCodeButton({
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="email" value={email} />
-      {role && <input type="hidden" name="role" value={role} />}
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button
         type="submit"

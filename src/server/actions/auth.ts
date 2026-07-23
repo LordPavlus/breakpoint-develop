@@ -31,7 +31,6 @@ export async function requestOtp(
   }
 
   const email = parsed.data.toLowerCase().trim()
-  const role = String(formData.get("role") ?? "") === "coach" ? "coach" : ""
 
   const lastToken = await prisma.verificationToken.findFirst({
     where: { identifier: email },
@@ -58,8 +57,7 @@ export async function requestOtp(
 
   await sendOtpEmail(email, code)
 
-  const roleParam = role ? `&role=${role}` : ""
-  redirect(`/verify?email=${encodeURIComponent(email)}${roleParam}`)
+  redirect(`/verify?email=${encodeURIComponent(email)}`)
 }
 
 export type VerifyOtpState = {
@@ -72,14 +70,13 @@ export async function verifyOtp(
 ): Promise<VerifyOtpState> {
   const email = String(formData.get("email") ?? "").toLowerCase().trim()
   const code = String(formData.get("code") ?? "").trim()
-  const role = String(formData.get("role") ?? "")
 
   if (!email || !/^\d{6}$/.test(code)) {
     return { error: "Введите 6-значный код" }
   }
 
   try {
-    await signIn("email-otp", { email, code, role, redirect: false })
+    await signIn("email-otp", { email, code, redirect: false })
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "Неверный или истёкший код" }

@@ -37,6 +37,9 @@ model User {
   playerProfile PlayerProfile?
   coachProfile  CoachProfile?
 
+  coachApplication         CoachApplication?
+  reviewedCoachApplications CoachApplication[] @relation("CoachApplicationReviewer")
+
   bookings          Booking[]                @relation("PlayerBookings")
   payments          Payment[]
   tournamentEntries TournamentRegistration[]
@@ -137,6 +140,33 @@ model CoachProfile {
   slots   TrainingSlot[]
   payouts Payout[]
   reviews Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum CoachApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Заявка на статус тренера — заполняется игроком, рассматривается админом.
+// Роль COACH и CoachProfile создаются только после APPROVED (см. coach-application.ts).
+model CoachApplication {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bio            String?
+  specialization String[]
+
+  status     CoachApplicationStatus @default(PENDING)
+  adminNote  String? // причина отклонения/комментарий админа, попадает в письмо
+  reviewedAt DateTime?
+
+  reviewedById String?
+  reviewedBy   User?   @relation("CoachApplicationReviewer", fields: [reviewedById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
