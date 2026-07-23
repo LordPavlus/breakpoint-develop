@@ -2,7 +2,7 @@ import Link from "next/link"
 import { CalendarDays, MapPin, Star, Users } from "lucide-react"
 import type { Prisma } from "@prisma/client"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Card,
   CardContent,
@@ -57,19 +57,18 @@ export function TrainingSlotCard({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-3">
+        <Link
+          href={`/coaches/${slot.coachId}`}
+          className="flex items-center gap-3 hover:opacity-80"
+        >
           <Avatar size="lg">
+            {slot.coach.user.image && (
+              <AvatarImage src={slot.coach.user.image} alt={coachName} />
+            )}
             <AvatarFallback>{initials(coachName)}</AvatarFallback>
           </Avatar>
           <div>
-            <CardTitle className="text-base">
-              <Link
-                href={`/trainings/${slot.id}`}
-                className="hover:underline"
-              >
-                {coachName}
-              </Link>
-            </CardTitle>
+            <CardTitle className="text-base">{coachName}</CardTitle>
             {slot.coach.ratingAvg != null && (
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Star className="size-3.5 fill-primary text-primary" />
@@ -77,7 +76,7 @@ export function TrainingSlotCard({
               </div>
             )}
           </div>
-        </div>
+        </Link>
       </CardHeader>
       <CardContent className="space-y-2 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">

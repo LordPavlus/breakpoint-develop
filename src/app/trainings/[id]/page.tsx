@@ -5,7 +5,7 @@ import { CheckCircle2 } from "lucide-react"
 
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -111,6 +111,9 @@ export default async function TrainingSlotPage({
       {/* Coach info */}
       <div className="mb-8 flex flex-wrap items-start gap-5">
         <Avatar size="lg">
+          {slot.coach.user.image && (
+            <AvatarImage src={slot.coach.user.image} alt={coachName} />
+          )}
           <AvatarFallback className="text-xl">{initials(coachName)}</AvatarFallback>
         </Avatar>
         <div className="flex-1">

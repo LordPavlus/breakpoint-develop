@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation"
 import { CalendarCheck, Star, Trophy } from "lucide-react"
 
+import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { dateFormatter } from "@/app/trainings/components/TrainingSlotCard"
+import { TrainingSlotCard, dateFormatter } from "@/app/trainings/components/TrainingSlotCard"
+import { PhotoLightboxItem } from "@/components/profile/PhotoLightboxItem"
 
 function initials(name: string) {
   return name
@@ -41,10 +43,19 @@ export default async function CoachPublicProfilePage({
     notFound()
   }
 
-  const completedCount = await prisma.booking.count({
-    where: { slot: { coachId: coach.id }, status: "COMPLETED_CONFIRMED" },
-  })
+  const [completedCount, upcomingSlots, session] = await Promise.all([
+    prisma.booking.count({
+      where: { slot: { coachId: coach.id }, status: "COMPLETED_CONFIRMED" },
+    }),
+    prisma.trainingSlot.findMany({
+      where: { coachId: coach.id, status: "AVAILABLE", startsAt: { gt: new Date() } },
+      include: { coach: { include: { user: true } } },
+      orderBy: { startsAt: "asc" },
+    }),
+    auth(),
+  ])
 
+  const isAuthenticated = Boolean(session?.user)
   const coachName = coach.user.name ?? "Тренер"
 
   return (
@@ -102,6 +113,17 @@ export default async function CoachPublicProfilePage({
         </Card>
       </div>
 
+      {upcomingSlots.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-lg font-semibold text-foreground">Предстоящие тренировки</h2>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {upcomingSlots.map((slot) => (
+              <TrainingSlotCard key={slot.id} slot={slot} isAuthenticated={isAuthenticated} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {coach.achievements && (
         <div className="mb-8">
           <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold text-foreground">
@@ -126,12 +148,10 @@ export default async function CoachPublicProfilePage({
           <h2 className="mb-3 text-lg font-semibold text-foreground">Фото с тренировок</h2>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {coach.photos.map((photo) => (
-              // eslint-disable-next-line @next/next/no-img-element -- прямая ссылка на R2
-              <img
+              <PhotoLightboxItem
                 key={photo.id}
-                src={photo.url}
-                alt=""
-                className="aspect-square rounded-lg object-cover"
+                url={photo.url}
+                className="aspect-square overflow-hidden rounded-lg"
               />
             ))}
           </div>

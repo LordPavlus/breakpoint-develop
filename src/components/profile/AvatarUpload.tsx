@@ -6,6 +6,7 @@ import { Camera, Loader2, X } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { removeAvatar, uploadAvatar } from "@/server/actions/avatar"
+import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const MAX_SIZE = 5 * 1024 * 1024
@@ -32,6 +33,7 @@ export function AvatarUpload({
   const [preview, setPreview] = useState(image)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [cropTarget, setCropTarget] = useState<{ src: string; contentType: string } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   if (!configured) return null
@@ -56,10 +58,22 @@ export function AvatarUpload({
       return
     }
 
+    setCropTarget({ src: URL.createObjectURL(file), contentType: file.type })
+  }
+
+  const closeCropDialog = () => {
+    if (cropTarget) URL.revokeObjectURL(cropTarget.src)
+    setCropTarget(null)
+  }
+
+  const handleCropped = (blob: Blob) => {
+    const contentType = cropTarget?.contentType ?? "image/jpeg"
+    closeCropDialog()
+
     startTransition(async () => {
       try {
         const formData = new FormData()
-        formData.set("file", file)
+        formData.set("file", blob, `avatar.${contentType === "image/png" ? "png" : "jpg"}`)
         const result = await uploadAvatar(formData)
         if (result.error || !result.url) {
           setError(result.error ?? "Не удалось загрузить файл")
@@ -135,6 +149,14 @@ export function AvatarUpload({
         />
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
+      {cropTarget && (
+        <AvatarCropDialog
+          imageSrc={cropTarget.src}
+          contentType={cropTarget.contentType}
+          onCancel={closeCropDialog}
+          onCropped={handleCropped}
+        />
+      )}
     </div>
   )
 }

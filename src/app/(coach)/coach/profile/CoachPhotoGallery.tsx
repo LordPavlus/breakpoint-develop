@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react"
 import { ImagePlus, Loader2, X } from "lucide-react"
 
 import { uploadCoachPhoto, removeCoachPhoto } from "@/server/actions/coach-photos"
+import { PhotoLightboxItem } from "@/components/profile/PhotoLightboxItem"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const MAX_SIZE = 5 * 1024 * 1024
@@ -83,8 +84,7 @@ export function CoachPhotoGallery({ photos: initialPhotos }: { photos: CoachPhot
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {photos.map((photo) => (
           <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-lg">
-            {/* eslint-disable-next-line @next/next/no-img-element -- прямая ссылка на R2, без домена в next.config */}
-            <img src={photo.url} alt="" className="size-full object-cover" />
+            <PhotoLightboxItem url={photo.url} className="size-full" />
             <button
               type="button"
               onClick={() => handleRemove(photo.id)}
