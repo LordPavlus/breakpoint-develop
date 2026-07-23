@@ -7,10 +7,12 @@ export async function sendCoachApplicationRejectedEmail(email: string, adminNote
     return
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"
+
   await resend.emails.send({
     from: "Break Point <noreply@bptennis.ru>",
     to: email,
     subject: "Заявка на статус тренера отклонена",
-    html: coachApplicationRejectedEmailHtml({ adminNote }),
+    html: coachApplicationRejectedEmailHtml({ adminNote, reapplyUrl: `${baseUrl}/become-coach` }),
   })
 }

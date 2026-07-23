@@ -49,8 +49,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user?.id) {
         token.id = user.id
+      }
+      // Роль перечитываем из БД на каждый запрос (не только при входе) —
+      // иначе изменение роли админом (напр. одобрение заявки тренера) не
+      // применится, пока пользователь не перезайдёт вручную.
+      if (token.id) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
+          where: { id: token.id },
           select: { role: true },
         })
         token.role = dbUser?.role ?? ("PLAYER" as UserRole)
