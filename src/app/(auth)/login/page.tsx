@@ -1,5 +1,3 @@
-import Link from "next/link"
-
 import {
   Card,
   CardContent,
@@ -10,6 +8,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { YandexLoginButton } from "@/components/auth/OAuthButtons"
 import { LoginForm } from "./LoginForm"
+import { BecomeCoachInfoDialog } from "./BecomeCoachInfoDialog"
 
 export default async function LoginPage({
   searchParams,
@@ -40,12 +39,9 @@ export default async function LoginPage({
         </CardContent>
       </Card>
 
-      <Link
-        href="/become-coach"
-        className="mt-4 text-center text-sm text-primary underline-offset-4 hover:underline"
-      >
-        Хотите тренировать? Подать заявку тренера
-      </Link>
+      <div className="mt-4 flex justify-center">
+        <BecomeCoachInfoDialog />
+      </div>
     </div>
   )
 }

@@ -9,6 +9,7 @@ import { r2Configured } from "@/lib/storage/s3"
 import { ProfileForm } from "./ProfileForm"
 import { ReferralSection } from "./ReferralSection"
 import { TelegramSection } from "./TelegramSection"
+import { BecomeCoachSection } from "./BecomeCoachSection"
 
 export default async function AccountPage() {
   const session = await auth()
@@ -23,18 +24,20 @@ export default async function AccountPage() {
     include: { playerProfile: true },
   })
 
-  const [referralCode, referralsCount, bonusCodes] = await Promise.all([
+  const [referralCode, referralsCount, bonusCodes, coachApplication] = await Promise.all([
     getOrCreateReferralCode(userId),
     prisma.referral.count({ where: { referrerId: userId } }),
     prisma.promoCode.findMany({
       where: { ownerId: userId, active: true, usedCount: 0 },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.coachApplication.findUnique({ where: { userId }, select: { status: true } }),
   ])
 
   return (
     <>
       <AvatarUpload name={user.name ?? "Игрок"} image={user.image} configured={r2Configured} />
+      <BecomeCoachSection role={user.role} applicationStatus={coachApplication?.status ?? null} />
       <ProfileForm
         email={user.email ?? ""}
         name={user.name ?? ""}
